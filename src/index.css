@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: skills-light --default, skills-dark --prefersdark;
+}
+
+@plugin "daisyui/theme" {
+  name: "skills-light";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: oklch(98% 0.01 240);
+  --color-base-200: oklch(95% 0.02 240);
+  --color-base-300: oklch(90% 0.02 240);
+  --color-base-content: oklch(24% 0.03 240);
+  --color-primary: oklch(56% 0.17 190);
+  --color-primary-content: oklch(98% 0.02 190);
+  --color-secondary: oklch(64% 0.14 210);
+  --color-secondary-content: oklch(98% 0.01 210);
+  --color-accent: oklch(70% 0.15 145);
+  --color-accent-content: oklch(18% 0.02 145);
+  --color-neutral: oklch(34% 0.03 240);
+  --color-neutral-content: oklch(96% 0.01 240);
+  --color-info: oklch(65% 0.16 240);
+  --color-info-content: oklch(99% 0.01 240);
+  --color-success: oklch(66% 0.18 145);
+  --color-success-content: oklch(98% 0.01 145);
+  --color-warning: oklch(79% 0.16 80);
+  --color-warning-content: oklch(26% 0.03 80);
+  --color-error: oklch(63% 0.22 28);
+  --color-error-content: oklch(98% 0.01 28);
+  --radius-box: 0.9rem;
+  --radius-field: 0.7rem;
+  --radius-selector: 0.7rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "skills-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(22% 0.02 245);
+  --color-base-200: oklch(18% 0.02 245);
+  --color-base-300: oklch(28% 0.02 245);
+  --color-base-content: oklch(94% 0.01 245);
+  --color-primary: oklch(67% 0.16 190);
+  --color-primary-content: oklch(17% 0.03 190);
+  --color-secondary: oklch(72% 0.12 215);
+  --color-secondary-content: oklch(18% 0.02 215);
+  --color-accent: oklch(72% 0.15 145);
+  --color-accent-content: oklch(18% 0.02 145);
+  --color-neutral: oklch(32% 0.02 240);
+  --color-neutral-content: oklch(96% 0.01 240);
+  --color-info: oklch(70% 0.12 240);
+  --color-info-content: oklch(16% 0.02 240);
+  --color-success: oklch(72% 0.16 145);
+  --color-success-content: oklch(16% 0.02 145);
+  --color-warning: oklch(80% 0.16 80);
+  --color-warning-content: oklch(20% 0.03 80);
+  --color-error: oklch(68% 0.22 28);
+  --color-error-content: oklch(16% 0.02 28);
+  --radius-box: 0.9rem;
+  --radius-field: 0.7rem;
+  --radius-selector: 0.7rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@custom-variant dark (&:where([data-theme=skills-dark], [data-theme=skills-dark] *));
+
+:root {
+  font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--color-base-100) 80%, transparent), transparent),
+    var(--color-base-200);
+  color: var(--color-base-content);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.hn {
+  line-height: 1;
+}

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "skills管理器",
+    "subtitle": "複数 Agent 向け skills 資産コントロールセンター",
+    "shellHint": "フェーズ1ではアプリ骨格、設定、スキャン基盤、タスクバスを実装しています。"
+  },
+  "nav": {
+    "overview": "概要",
+    "skills": "My Skills",
+    "market": "マーケット",
+    "security": "セキュリティ",
+    "settings": "設定"
+  },
+  "topbar": {
+    "searchPlaceholder": "ページ、skill、設定を検索（今後対応）",
+    "theme": "テーマ",
+    "language": "言語",
+    "tasks": "タスク"
+  },
+  "overview": {
+    "title": "資産概要",
+    "description": "ローカル skill 資産、リスク、重複パス、最近のタスクの基礎情報を表示します。",
+    "scanNow": "今すぐスキャン",
+    "stats": {
+      "totalSkills": "検出済み Skills",
+      "riskySkills": "リスクあり",
+      "duplicatePaths": "重複パス",
+      "reclaimableBytes": "解放可能容量",
+      "templateCount": "テンプレート数"
+    },
+    "recentTasks": "最近のタスク",
+    "recentTasksHint": "タスクセンターではスキャン、インストール、配布、テンプレート注入の進行状況を表示します。",
+    "agents": "Agent 能力マトリクス"
+  },
+  "skills": {
+    "title": "My Skills",
+    "description": "このフェーズでは実際のスキャン結果と管理境界のみを表示します。インストールと配布は次フェーズで対応します。",
+    "empty": "まだ skill が見つかっていません。先にスキャンを実行してください。"
+  },
+  "market": {
+    "title": "マーケット",
+    "description": "マーケット集約は次フェーズで接続します。このページでは構造と入口のみを保持します。"
+  },
+  "security": {
+    "title": "セキュリティ",
+    "description": "セキュリティエンジンは次フェーズで有効化されます。現時点ではタスクセンターでスキャン基盤を確認できます。"
+  },
+  "settings": {
+    "title": "設定とガバナンス",
+    "description": "言語、テーマ、プロジェクトルート、カスタムスキャンパスを管理します。",
+    "language": "表示言語",
+    "themeMode": "テーマモード",
+    "themeModes": {
+      "system": "システムに従う",
+      "light": "ライト",
+      "dark": "ダーク"
+    },
+    "projectRoots": "プロジェクトルート",
+    "customRoots": "カスタムスキャンパス",
+    "save": "設定を保存",
+    "saving": "保存中..."
+  },
+  "tasks": {
+    "title": "タスクセンター",
+    "empty": "現在アクティブなタスクはありません。",
+    "queued": "待機中",
+    "running": "実行中",
+    "partial": "一部完了",
+    "completed": "完了",
+    "failed": "失敗"
+  },
+  "common": {
+    "comingSoon": "今後対応",
+    "system": "システム",
+    "status": "状態",
+    "path": "パス",
+    "agent": "Agent",
+    "scope": "範囲",
+    "managed": "管理対象",
+    "unmanaged": "未管理",
+    "footer": "アイコンは HackerNoon Pixel Icon Library（CC BY 4.0）を利用しています。"
+  }
+}

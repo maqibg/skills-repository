@@ -1,0 +1,203 @@
+import { useMemo, useState } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { cn } from '../../lib/cn'
+import { useAppStore } from '../../stores/use-app-store'
+import { useSettingsStore } from '../../stores/use-settings-store'
+import { useTaskStore } from '../../stores/use-task-store'
+
+const navItems = [
+  { to: '/', key: 'overview', icon: 'hn-home' },
+  { to: '/skills', key: 'skills', icon: 'hn-folder' },
+  { to: '/market', key: 'market', icon: 'hn-search' },
+  { to: '/security', key: 'security', icon: 'hn-shield' },
+  { to: '/settings', key: 'settings', icon: 'hn-settings' },
+] as const
+
+const formatBytes = (value: number) => {
+  if (value <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let amount = value
+  let unitIndex = 0
+  while (amount >= 1024 && unitIndex < units.length - 1) {
+    amount /= 1024
+    unitIndex += 1
+  }
+  return `${amount.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+export function AppShell() {
+  const { t } = useTranslation()
+  const [tasksOpen, setTasksOpen] = useState(false)
+  const overview = useAppStore((state) => state.overview)
+  const system = useAppStore((state) => state.system)
+  const settings = useSettingsStore((state) => state.settings)
+  const setThemeMode = useSettingsStore((state) => state.setThemeMode)
+  const saveSettings = useSettingsStore((state) => state.save)
+  const tasks = useTaskStore((state) => state.tasks)
+
+  const activeTasks = useMemo(
+    () => tasks.filter((task) => task.status === 'queued' || task.status === 'running'),
+    [tasks],
+  )
+
+  const toggleThemeQuickly = async () => {
+    const nextTheme = settings.themeMode === 'dark' ? 'light' : 'dark'
+    setThemeMode(nextTheme)
+    await saveSettings()
+  }
+
+  return (
+    <div className="flex min-h-screen bg-base-200 text-base-content">
+      <aside className="flex w-72 flex-col border-r border-base-300 bg-base-100/90 backdrop-blur">
+        <div className="border-b border-base-300 px-5 py-5">
+          <p className="text-xs uppercase tracking-[0.24em] text-primary">skills manager</p>
+          <h1 className="mt-2 text-2xl font-semibold">{t('app.title')}</h1>
+          <p className="mt-2 text-sm text-base-content/60">{t('app.subtitle')}</p>
+        </div>
+
+        <nav className="flex-1 px-3 py-4">
+          <ul className="space-y-1">
+            {navItems.map((item) => (
+              <li key={item.key}>
+                <NavLink
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-box px-4 py-3 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-content'
+                        : 'text-base-content/70 hover:bg-base-200 hover:text-base-content',
+                    )
+                  }
+                >
+                  <i className={cn('hn text-base', item.icon)} aria-hidden />
+                  <span>{t(`nav.${item.key}`)}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="border-t border-base-300 px-4 py-4 text-xs text-base-content/55">
+          <p>{t('common.footer')}</p>
+        </div>
+      </aside>
+
+      <div className="flex min-h-screen flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-base-300 bg-base-100/90 px-6 py-4 backdrop-blur">
+          <div className="flex-1">
+            <label className="input input-bordered flex items-center gap-2 bg-base-200">
+              <i className="hn hn-search text-base-content/50" aria-hidden />
+              <input
+                type="text"
+                className="grow"
+                placeholder={t('topbar.searchPlaceholder')}
+                disabled
+              />
+            </label>
+          </div>
+
+          <div className="hidden items-center gap-2 rounded-full bg-base-200 px-3 py-2 text-xs font-medium text-base-content/70 md:flex">
+            <span>{t('topbar.language')}:</span>
+            <span>{settings.language}</span>
+          </div>
+
+          <button className="btn btn-ghost btn-sm" onClick={() => void toggleThemeQuickly()}>
+            <i className="hn hn-sun" aria-hidden />
+            <span>{t('topbar.theme')}</span>
+          </button>
+
+          <button className="btn btn-primary btn-sm" onClick={() => setTasksOpen((open) => !open)}>
+            <i className="hn hn-list" aria-hidden />
+            <span>{t('topbar.tasks')}</span>
+            {activeTasks.length > 0 ? (
+              <span className="badge badge-sm bg-primary-content text-primary">{activeTasks.length}</span>
+            ) : null}
+          </button>
+        </header>
+
+        <main className="flex flex-1 gap-6 overflow-hidden px-6 py-6">
+          <section className="min-w-0 flex-1">
+            <div className="mb-6 grid gap-4 md:grid-cols-4">
+              <div className="rounded-box border border-base-300 bg-base-100 p-4">
+                <p className="text-xs uppercase tracking-wide text-base-content/55">
+                  {t('overview.stats.totalSkills')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{overview.totalSkills}</p>
+              </div>
+              <div className="rounded-box border border-warning/40 bg-base-100 p-4">
+                <p className="text-xs uppercase tracking-wide text-base-content/55">
+                  {t('overview.stats.riskySkills')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{overview.riskySkills}</p>
+              </div>
+              <div className="rounded-box border border-base-300 bg-base-100 p-4">
+                <p className="text-xs uppercase tracking-wide text-base-content/55">
+                  {t('overview.stats.duplicatePaths')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{overview.duplicatePaths}</p>
+              </div>
+              <div className="rounded-box border border-base-300 bg-base-100 p-4">
+                <p className="text-xs uppercase tracking-wide text-base-content/55">
+                  {t('overview.stats.reclaimableBytes')}
+                </p>
+                <p className="mt-2 text-2xl font-semibold">{formatBytes(overview.reclaimableBytes)}</p>
+              </div>
+            </div>
+
+            <Outlet />
+          </section>
+
+          <aside
+            className={cn(
+              'w-full max-w-[420px] shrink-0 rounded-box border border-base-300 bg-base-100 transition-all duration-200',
+              tasksOpen
+                ? 'translate-x-0 opacity-100'
+                : 'pointer-events-none hidden opacity-0 xl:block xl:translate-x-4',
+            )}
+          >
+            <div className="border-b border-base-300 px-5 py-4">
+              <p className="text-lg font-semibold">{t('tasks.title')}</p>
+              <p className="mt-1 text-sm text-base-content/60">
+                {system ? `${system.os.toUpperCase()} · ${system.arch}` : t('app.shellHint')}
+              </p>
+            </div>
+
+            <div className="max-h-[calc(100vh-12rem)] space-y-3 overflow-y-auto p-4">
+              {tasks.length === 0 ? (
+                <div className="rounded-box border border-dashed border-base-300 bg-base-200/70 p-4 text-sm text-base-content/60">
+                  {t('tasks.empty')}
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <article key={task.taskId} className="rounded-box border border-base-300 bg-base-200/60 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">{task.taskType}</p>
+                        <p className="mt-1 text-xs text-base-content/55">{task.message}</p>
+                      </div>
+                      <span className="badge badge-outline">{t(`tasks.${task.status}`)}</span>
+                    </div>
+                    <progress
+                      className="progress progress-primary mt-3 w-full"
+                      value={task.current}
+                      max={task.total || 1}
+                    />
+                    <div className="mt-2 flex items-center justify-between text-xs text-base-content/55">
+                      <span>{task.step}</span>
+                      <span>
+                        {task.current}/{task.total}
+                      </span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </aside>
+        </main>
+      </div>
+    </div>
+  )
+}

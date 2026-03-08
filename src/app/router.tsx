@@ -1,0 +1,21 @@
+import { createHashRouter } from 'react-router-dom'
+import { AppShell } from '../components/layout/AppShell'
+import { MarketPage } from '../pages/MarketPage'
+import { OverviewPage } from '../pages/OverviewPage'
+import { SecurityPage } from '../pages/SecurityPage'
+import { SettingsPage } from '../pages/SettingsPage'
+import { SkillsPage } from '../pages/SkillsPage'
+
+export const router = createHashRouter([
+  {
+    path: '/',
+    element: <AppShell />,
+    children: [
+      { index: true, element: <OverviewPage /> },
+      { path: 'skills', element: <SkillsPage /> },
+      { path: 'market', element: <MarketPage /> },
+      { path: 'security', element: <SecurityPage /> },
+      { path: 'settings', element: <SettingsPage /> },
+    ],
+  },
+])

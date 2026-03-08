@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "skills manager",
+    "subtitle": "Skill asset control center across agents",
+    "shellHint": "Phase 1 currently includes the app shell, settings, scan foundation, and task bus."
+  },
+  "nav": {
+    "overview": "Overview",
+    "skills": "My Skills",
+    "market": "Market",
+    "security": "Security",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "searchPlaceholder": "Search pages, skills, or settings (coming soon)",
+    "theme": "Theme",
+    "language": "Language",
+    "tasks": "Tasks"
+  },
+  "overview": {
+    "title": "Asset Overview",
+    "description": "This dashboard shows foundational insight into local skill assets, risks, duplicate paths, and recent tasks.",
+    "scanNow": "Scan now",
+    "stats": {
+      "totalSkills": "Discovered Skills",
+      "riskySkills": "Risky Skills",
+      "duplicatePaths": "Duplicate Paths",
+      "reclaimableBytes": "Reclaimable Space",
+      "templateCount": "Templates"
+    },
+    "recentTasks": "Recent tasks",
+    "recentTasksHint": "The task center will show scan, install, distribute, and template injection progress.",
+    "agents": "Agent capability matrix"
+  },
+  "skills": {
+    "title": "My Skills",
+    "description": "This phase focuses on real scan results and managed-state boundaries. Install and distribution flows come next.",
+    "empty": "No skills discovered yet. Run a scan first."
+  },
+  "market": {
+    "title": "Market",
+    "description": "Marketplace aggregation will be connected in the next phase. This page preserves the structure and entry point."
+  },
+  "security": {
+    "title": "Security",
+    "description": "The security engine will be enabled in the next phase. For now, observe the scan foundation through the task center."
+  },
+  "settings": {
+    "title": "Settings & Governance",
+    "description": "Manage language, theme, project roots, and custom scan roots here.",
+    "language": "Interface language",
+    "themeMode": "Theme mode",
+    "themeModes": {
+      "system": "Follow system",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "projectRoots": "Project roots",
+    "customRoots": "Custom scan roots",
+    "save": "Save settings",
+    "saving": "Saving..."
+  },
+  "tasks": {
+    "title": "Task Center",
+    "empty": "There are no active tasks right now.",
+    "queued": "Queued",
+    "running": "Running",
+    "partial": "Partial",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "common": {
+    "comingSoon": "Coming soon",
+    "system": "System",
+    "status": "Status",
+    "path": "Path",
+    "agent": "Agent",
+    "scope": "Scope",
+    "managed": "Managed",
+    "unmanaged": "Unmanaged",
+    "footer": "Icons powered by HackerNoon Pixel Icon Library (CC BY 4.0)."
+  }
+}
