@@ -4,16 +4,10 @@ import {
   onTaskFailed,
   onTaskProgress,
 } from '../lib/tauri-client'
-import type {
-  DistributionResult,
-  ScanSkillsResult,
-  TaskProgress,
-  TemplateInjectionResult,
-} from '../types/app'
+import type { DistributionResult, ScanSkillsResult, TaskProgress } from '../types/app'
 import { useAppStore } from './use-app-store'
 import { useSecurityStore } from './use-security-store'
 import { useSkillsStore } from './use-skills-store'
-import { useTemplatesStore } from './use-templates-store'
 
 interface TaskStoreState {
   attached: boolean
@@ -65,12 +59,6 @@ export const useTaskStore = create<TaskStoreState>((set, get) => ({
       if (event.taskType === 'rescan_security') {
         void useSecurityStore.getState().refresh()
       }
-
-      if (event.taskType === 'inject_template' && event.payload) {
-        const result = event.payload as TemplateInjectionResult
-        useTemplatesStore.getState().applyInjectionResult(result)
-        void useSecurityStore.getState().refresh()
-      }
     }
 
     const unlistenProgress = await onTaskProgress((event) => {
@@ -86,16 +74,6 @@ export const useTaskStore = create<TaskStoreState>((set, get) => ({
       }
 
       if (event.taskType === 'rescan_security') {
-        void useSecurityStore.getState().refresh()
-      }
-
-      if (event.taskType === 'inject_template') {
-        if (event.payload) {
-          const result = event.payload as TemplateInjectionResult
-          useTemplatesStore.getState().applyInjectionResult(result)
-        } else {
-          useTemplatesStore.getState().setInjectionError(event.message)
-        }
         void useSecurityStore.getState().refresh()
       }
     })

@@ -16,8 +16,10 @@ coverage/
 
 # Tauri / Rust generated outputs
 src-tauri/target/
+src-tauri/target-codex*/
 src-tauri/gen/
 target/
+target-codex*/
 
 # Logs and runtime artifacts
 logs/

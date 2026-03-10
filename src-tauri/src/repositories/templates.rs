@@ -165,8 +165,8 @@ pub fn save_template(path: &Path, request: &SaveTemplateRequest) -> Result<Templ
             request.name,
             request.description,
             serde_json::to_string(&request.tags)?,
-            serde_json::to_string(&request.target_agents)?,
-            request.scope,
+            serde_json::to_string(&Vec::<String>::new())?,
+            "user",
             is_builtin as i64,
             created_at,
             now,
@@ -177,38 +177,6 @@ pub fn save_template(path: &Path, request: &SaveTemplateRequest) -> Result<Templ
         "DELETE FROM template_items WHERE template_id = ?1",
         params![template_id],
     )?;
-
-    for (index, item) in request.items.iter().enumerate() {
-        let item_id = if item.id.trim().is_empty() {
-            Uuid::new_v4().to_string()
-        } else {
-            item.id.clone()
-        };
-
-        tx.execute(
-            "
-            INSERT INTO template_items (
-                id,
-                template_id,
-                skill_ref_type,
-                skill_ref,
-                display_name,
-                required,
-                order_index
-            )
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
-            ",
-            params![
-                item_id,
-                template_id,
-                item.skill_ref_type,
-                item.skill_ref,
-                item.display_name,
-                item.required as i64,
-                index as i64,
-            ],
-        )?;
-    }
 
     let saved = load_template_record(&tx, &template_id)?
         .ok_or_else(|| anyhow!("failed to reload saved template"))?;
@@ -250,16 +218,6 @@ mod tests {
                 name: "Rust Project".into(),
                 description: Some("Rust starter".into()),
                 tags: vec!["rust".into(), "backend".into()],
-                target_agents: vec!["Claude Code".into(), "OpenAI Codex".into()],
-                scope: "user".into(),
-                items: vec![TemplateItem {
-                    id: String::new(),
-                    skill_ref_type: "skill_id".into(),
-                    skill_ref: "skill-1".into(),
-                    display_name: Some("Rust Skill".into()),
-                    required: true,
-                    order_index: 0,
-                }],
             },
         )
         .unwrap();
@@ -267,10 +225,11 @@ mod tests {
         let listed = list_templates(&db_path).unwrap();
         assert_eq!(listed.len(), 1);
         assert_eq!(listed[0].name, "Rust Project");
-        assert_eq!(listed[0].items.len(), 1);
+        assert!(listed[0].items.is_empty());
 
         let loaded = get_template(&db_path, &saved.id).unwrap().unwrap();
-        assert_eq!(loaded.target_agents.len(), 2);
+        assert!(loaded.target_agents.is_empty());
+        assert_eq!(loaded.scope, "user");
 
         delete_template(&db_path, &saved.id).unwrap();
         assert!(list_templates(&db_path).unwrap().is_empty());

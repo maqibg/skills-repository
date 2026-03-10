@@ -6,13 +6,11 @@ use crate::{
         types::{
             AppSettings, DistributionRequest, InstallSkillRequest, MarketSearchRequest,
             MarketSearchResponse, SaveTemplateRequest, ScanSkillsRequest, SecurityReport,
-            TaskHandle, TemplateInjectionRequest, TemplateRecord,
+            TaskHandle, TemplateRecord,
         },
     },
     repositories::security as security_repository,
-    services::{
-        bootstrap, distribution, install, market, scan, settings, template_injection, templates,
-    },
+    services::{bootstrap, distribution, install, market, scan, settings, templates},
     tasks,
 };
 
@@ -368,111 +366,6 @@ pub fn distribute_skill(
                         &error.to_string(),
                         failed_payload,
                     ),
-                );
-            }
-        }
-    });
-
-    Ok(task)
-}
-
-#[tauri::command]
-pub fn inject_template(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    request: TemplateInjectionRequest,
-) -> Result<TaskHandle, String> {
-    log::info!("inject_template invoked");
-    let task = tasks::new_task_handle("inject_template");
-    let task_handle = task.clone();
-    let app_handle = app.clone();
-    let state = state.inner().clone();
-
-    log_task_emit_error(
-        "inject_template.queued",
-        tasks::emit_progress(
-            &app,
-            &task,
-            "queued",
-            "prepare",
-            0,
-            3,
-            "Template injection task queued",
-        ),
-    );
-
-    tauri::async_runtime::spawn(async move {
-        log_task_emit_error(
-            "inject_template.install",
-            tasks::emit_progress(
-                &app_handle,
-                &task_handle,
-                "running",
-                "download",
-                1,
-                3,
-                "Resolving and installing missing template skills",
-            ),
-        );
-        log_task_emit_error(
-            "inject_template.distribute",
-            tasks::emit_progress(
-                &app_handle,
-                &task_handle,
-                "running",
-                "distribute",
-                2,
-                3,
-                "Injecting template skills into project targets",
-            ),
-        );
-
-        match template_injection::inject_template(
-            &state.paths,
-            state.agent_registry.as_ref(),
-            &task_handle.task_id,
-            &request,
-        ) {
-            Ok(result) if result.status == "partial" => {
-                log_task_emit_error(
-                    "inject_template.partial",
-                    tasks::emit_partial(
-                        &app_handle,
-                        &task_handle,
-                        "cleanup",
-                        "Template injection completed with partial failures",
-                        result,
-                    ),
-                );
-            }
-            Ok(result) if result.status == "failed" => {
-                log_task_emit_error(
-                    "inject_template.failed",
-                    tasks::emit_failed_with_payload(
-                        &app_handle,
-                        &task_handle,
-                        "distribute",
-                        "Template injection failed for all items",
-                        result,
-                    ),
-                );
-            }
-            Ok(result) => {
-                log_task_emit_error(
-                    "inject_template.completed",
-                    tasks::emit_completed(
-                        &app_handle,
-                        &task_handle,
-                        "cleanup",
-                        "Template injection completed",
-                        result,
-                    ),
-                );
-            }
-            Err(error) => {
-                log_task_emit_error(
-                    "inject_template.command_failed",
-                    tasks::emit_failed(&app_handle, &task_handle, "prepare", &error.to_string()),
                 );
             }
         }

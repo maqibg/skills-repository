@@ -129,76 +129,31 @@
   },
   "templates": {
     "title": "模板",
-    "description": "在这里维护可复用的 skill 组合，并把它们注入到项目级 Agent 路径中，且全程返回显式结果。",
+    "description": "当前模板仅用于创建基础模板记录。你现在只需填写名称、描述和标签。",
     "create": "新建模板",
     "createTitle": "创建模板",
     "editTitle": "编辑模板",
-    "builtin": "内置",
     "listTitle": "模板列表",
     "count": "共 {{count}} 个模板",
     "loading": "正在读取模板...",
-    "empty": "还没有模板。先创建一个模板，再执行注入。",
+    "empty": "还没有模板，先创建一个空模板。",
     "noDescription": "暂无描述。",
+    "noTags": "暂无标签",
     "fields": {
       "name": "名称",
       "description": "描述",
-      "scope": "范围",
-      "tags": "标签",
-      "targetAgents": "目标 Agent",
-      "itemType": "条目类型",
-      "skillRef": "Skill 引用",
-      "displayName": "显示名称",
-      "required": "必需"
+      "tags": "标签"
     },
     "placeholders": {
       "name": "前端初始化模板",
       "description": "适用于新项目的 skills 组合",
-      "tags": "react, vite, typescript",
-      "targetAgents": "Claude Code, OpenAI Codex",
-      "skillRef": "skill id、source url 或 market ref",
-      "displayName": "便于识别的名称"
+      "tags": "react, vite, typescript"
     },
-    "scopeOptions": {
-      "user": "用户",
-      "system": "系统"
-    },
-    "itemsTitle": "模板条目",
-    "itemsEmpty": "至少添加一个模板条目，定义需要注入的 skill。",
-    "addItem": "添加条目",
-    "removeItem": "移除条目",
+    "emptyTemplateNotice": "当前版本只创建空模板，不配置模板条目，也不执行模板注入。后续会在模板详情中从统一仓库选择 skills。",
     "save": "保存模板",
     "saving": "保存中...",
     "delete": "删除模板",
-    "deleting": "删除中...",
-    "injection": {
-      "title": "注入到项目",
-      "description": "复用已安装 skill，或先安装缺失项，再把它们分发到目标项目。",
-      "selectTemplateFirst": "请先选择或创建模板，再执行注入。",
-      "projectPath": "目标项目路径",
-      "projectPlaceholder": "E:/workspace/demo-project",
-      "overwriteStrategy": "覆盖策略",
-      "overwriteOptions": {
-        "skipExisting": "跳过已存在目标",
-        "overwrite": "覆盖已存在目标"
-      },
-      "inject": "执行注入",
-      "injecting": "注入中...",
-      "statuses": {
-        "completed": "注入完成",
-        "partial": "注入完成，但部分条目失败",
-        "failed": "注入失败"
-      },
-      "itemStatuses": {
-        "installed": "已安装",
-        "skipped": "已跳过",
-        "failed": "失败"
-      },
-      "summary": {
-        "installed": "已安装：{{count}}",
-        "skipped": "已跳过：{{count}}",
-        "failed": "失败：{{count}}"
-      }
-    }
+    "deleting": "删除中..."
   },
   "settings": {
     "title": "设置与治理",

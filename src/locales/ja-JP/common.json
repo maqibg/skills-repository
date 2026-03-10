@@ -129,76 +129,31 @@
   },
   "templates": {
     "title": "テンプレート",
-    "description": "再利用可能な skill の組み合わせを管理し、明示的な結果付きでプロジェクト単位の Agent パスへ注入します。",
+    "description": "現在のテンプレートは基本情報だけを保存します。名前、説明、タグを入力して空テンプレートを作成してください。",
     "create": "新規テンプレート",
     "createTitle": "テンプレート作成",
     "editTitle": "テンプレート編集",
-    "builtin": "内蔵",
     "listTitle": "テンプレート一覧",
     "count": "{{count}} 件のテンプレート",
     "loading": "テンプレートを読み込み中...",
-    "empty": "まだテンプレートがありません。まずテンプレートを作成してください。",
+    "empty": "まだテンプレートがありません。まず空テンプレートを作成してください。",
     "noDescription": "説明はありません。",
+    "noTags": "タグはありません",
     "fields": {
       "name": "名前",
       "description": "説明",
-      "scope": "範囲",
-      "tags": "タグ",
-      "targetAgents": "対象 Agent",
-      "itemType": "項目タイプ",
-      "skillRef": "Skill 参照",
-      "displayName": "表示名",
-      "required": "必須"
+      "tags": "タグ"
     },
     "placeholders": {
       "name": "フロントエンド初期化テンプレート",
       "description": "新規プロジェクト向けの skill バンドル",
-      "tags": "react, vite, typescript",
-      "targetAgents": "Claude Code, OpenAI Codex",
-      "skillRef": "skill id、source url、market ref",
-      "displayName": "分かりやすい表示名"
+      "tags": "react, vite, typescript"
     },
-    "scopeOptions": {
-      "user": "ユーザー",
-      "system": "システム"
-    },
-    "itemsTitle": "テンプレート項目",
-    "itemsEmpty": "少なくとも 1 件のテンプレート項目を追加してください。",
-    "addItem": "項目追加",
-    "removeItem": "項目削除",
+    "emptyTemplateNotice": "このバージョンでは空テンプレートの作成のみ対応しています。テンプレート項目の設定やプロジェクト注入は後続で対応します。",
     "save": "テンプレート保存",
     "saving": "保存中...",
     "delete": "テンプレート削除",
-    "deleting": "削除中...",
-    "injection": {
-      "title": "プロジェクトへ注入",
-      "description": "既存の skill を再利用し、足りないものは先にインストールしてから対象プロジェクトへ配布します。",
-      "selectTemplateFirst": "注入前にテンプレートを選択または作成してください。",
-      "projectPath": "対象プロジェクトパス",
-      "projectPlaceholder": "E:/workspace/demo-project",
-      "overwriteStrategy": "上書き戦略",
-      "overwriteOptions": {
-        "skipExisting": "既存ターゲットをスキップ",
-        "overwrite": "既存ターゲットを上書き"
-      },
-      "inject": "テンプレート注入",
-      "injecting": "注入中...",
-      "statuses": {
-        "completed": "注入完了",
-        "partial": "一部失敗で完了",
-        "failed": "注入失敗"
-      },
-      "itemStatuses": {
-        "installed": "導入済み",
-        "skipped": "スキップ",
-        "failed": "失敗"
-      },
-      "summary": {
-        "installed": "導入: {{count}}",
-        "skipped": "スキップ: {{count}}",
-        "failed": "失敗: {{count}}"
-      }
-    }
+    "deleting": "削除中..."
   },
   "settings": {
     "title": "設定とガバナンス",

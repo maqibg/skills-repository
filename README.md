@@ -12,7 +12,7 @@
 | 市场 | GitHub provider 真实搜索、SQLite 缓存、provider 独立状态展示 | 多 provider 聚合、市场详情增强 |
 | 安装与安全 | 下载 / 解包 / 识别 SKILL.md / 安全预扫描 / canonical store / 落库 / 安全报告写入 | 更新、卸载、差异对比 |
 | 分发 | 已安装 skill 的真实分发、Windows `symlink` 权限失败显式报错 | 分发向导完善、自定义批量分发 |
-| 模板 | 模板 CRUD、模板注入、逐项 `installed/skipped/failed` 结果 | `market_ref` 模板项接通、模板分享/市场化 |
+| 模板 | 空模板 CRUD（名称 / 描述 / 标签） | 模板条目配置、从统一仓库选择 skills、模板注入、模板分享/市场化 |
 
 ## 运行方式
 
@@ -32,5 +32,5 @@ pnpm tauri dev
 ## 注意事项
 
 - 当前实现以第二阶段主链路为准，README 仅做入口说明，产品/技术真源仍以 `tep-docs/PRD.md` 与 `tep-docs/TechDesign.md` 为准。
-- 当前仍未接通更新治理、空间治理统计、模板市场化与 `market_ref` 模板项安装。
+- 当前仍未接通更新治理、空间治理统计、模板条目配置、从统一仓库选择 skills、模板注入与模板市场化。
 - 重要变更必须优先回写文档，不要只改代码不改真源文档。

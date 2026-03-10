@@ -129,76 +129,31 @@
   },
   "templates": {
     "title": "Templates",
-    "description": "Manage reusable skill bundles and inject them into project-level agent paths with explicit results.",
+    "description": "Templates currently store only basic metadata. Fill in name, description, and tags to create an empty template.",
     "create": "New template",
     "createTitle": "Create template",
     "editTitle": "Edit template",
-    "builtin": "Built-in",
     "listTitle": "Template list",
     "count": "{{count}} templates",
     "loading": "Loading templates...",
-    "empty": "No templates available yet. Create one to start the injection workflow.",
+    "empty": "No templates yet. Create an empty template first.",
     "noDescription": "No description provided.",
+    "noTags": "No tags yet",
     "fields": {
       "name": "Name",
       "description": "Description",
-      "scope": "Scope",
-      "tags": "Tags",
-      "targetAgents": "Target agents",
-      "itemType": "Item type",
-      "skillRef": "Skill reference",
-      "displayName": "Display name",
-      "required": "Required"
+      "tags": "Tags"
     },
     "placeholders": {
       "name": "Frontend starter",
       "description": "Bundle for a new project",
-      "tags": "react, vite, typescript",
-      "targetAgents": "Claude Code, OpenAI Codex",
-      "skillRef": "skill id, source url, or market ref",
-      "displayName": "Readable item name"
+      "tags": "react, vite, typescript"
     },
-    "scopeOptions": {
-      "user": "User",
-      "system": "System"
-    },
-    "itemsTitle": "Template items",
-    "itemsEmpty": "Add at least one template item to describe what should be injected.",
-    "addItem": "Add item",
-    "removeItem": "Remove item",
+    "emptyTemplateNotice": "This build creates empty templates only. Template items and project injection will be added later after the canonical store flow is ready.",
     "save": "Save template",
     "saving": "Saving...",
     "delete": "Delete template",
-    "deleting": "Deleting...",
-    "injection": {
-      "title": "Inject into project",
-      "description": "Reuse installed skills or install missing ones, then distribute them into the selected project.",
-      "selectTemplateFirst": "Select or create a template before injecting.",
-      "projectPath": "Target project path",
-      "projectPlaceholder": "E:/workspace/demo-project",
-      "overwriteStrategy": "Overwrite strategy",
-      "overwriteOptions": {
-        "skipExisting": "Skip existing targets",
-        "overwrite": "Overwrite existing targets"
-      },
-      "inject": "Inject template",
-      "injecting": "Injecting...",
-      "statuses": {
-        "completed": "Injection completed",
-        "partial": "Injection completed with partial failures",
-        "failed": "Injection failed"
-      },
-      "itemStatuses": {
-        "installed": "Installed",
-        "skipped": "Skipped",
-        "failed": "Failed"
-      },
-      "summary": {
-        "installed": "Installed: {{count}}",
-        "skipped": "Skipped: {{count}}",
-        "failed": "Failed: {{count}}"
-      }
-    }
+    "deleting": "Deleting..."
   },
   "settings": {
     "title": "Settings & Governance",

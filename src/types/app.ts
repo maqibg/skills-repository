@@ -199,10 +199,6 @@ export interface TemplateRecord {
   name: string
   description?: string | null
   tags: string[]
-  targetAgents: string[]
-  scope: string
-  isBuiltin: boolean
-  items: TemplateItem[]
   createdAt: number
   updatedAt: number
 }
@@ -212,31 +208,6 @@ export interface SaveTemplateRequest {
   name: string
   description?: string | null
   tags: string[]
-  targetAgents: string[]
-  scope: string
-  items: TemplateItem[]
-}
-
-export interface TemplateInjectionRequest {
-  templateId: string
-  targetProjectPath: string
-  overwriteStrategy: string
-}
-
-export interface TemplateInjectionItemResult {
-  skillRef: string
-  status: string
-  message?: string | null
-}
-
-export interface TemplateInjectionResult {
-  templateId: string
-  targetProjectPath: string
-  status: string
-  installedCount: number
-  skippedCount: number
-  failedCount: number
-  results: TemplateInjectionItemResult[]
 }
 
 export interface ScanSkillsRequest {
@@ -266,7 +237,6 @@ export type TaskType =
   | 'remove_distribution'
   | 'delete_skill'
   | 'update_skill'
-  | 'inject_template'
   | 'rescan_security'
 
 export interface TaskProgress {

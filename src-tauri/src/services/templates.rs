@@ -11,16 +11,6 @@ fn validate_template(request: &SaveTemplateRequest) -> Result<()> {
         return Err(anyhow!("template name is required"));
     }
 
-    if request.scope != "system" && request.scope != "user" {
-        return Err(anyhow!("unsupported template scope {}", request.scope));
-    }
-
-    for item in &request.items {
-        if item.skill_ref.trim().is_empty() {
-            return Err(anyhow!("template item skill_ref is required"));
-        }
-    }
-
     Ok(())
 }
 

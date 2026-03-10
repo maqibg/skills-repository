@@ -12,7 +12,6 @@ import type {
   SaveTemplateRequest,
   TaskHandle,
   TaskProgress,
-  TemplateInjectionRequest,
   TemplateRecord,
 } from '../types/app'
 
@@ -52,9 +51,6 @@ export const saveTemplate = (request: SaveTemplateRequest) =>
 
 export const deleteTemplate = (templateId: string) =>
   invoke<void>('delete_template', { templateId })
-
-export const injectTemplate = (request: TemplateInjectionRequest) =>
-  invoke<TaskHandle>('inject_template', { request })
 
 export const scanSkills = (request: ScanSkillsRequest) =>
   invoke<TaskHandle>('scan_skills', { request })

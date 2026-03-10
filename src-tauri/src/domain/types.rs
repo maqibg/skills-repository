@@ -283,37 +283,6 @@ pub struct SaveTemplateRequest {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
-    pub target_agents: Vec<String>,
-    pub scope: String,
-    pub items: Vec<TemplateItem>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TemplateInjectionRequest {
-    pub template_id: String,
-    pub target_project_path: String,
-    pub overwrite_strategy: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TemplateInjectionItemResult {
-    pub skill_ref: String,
-    pub status: String,
-    pub message: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TemplateInjectionResult {
-    pub template_id: String,
-    pub target_project_path: String,
-    pub status: String,
-    pub installed_count: u32,
-    pub skipped_count: u32,
-    pub failed_count: u32,
-    pub results: Vec<TemplateInjectionItemResult>,
 }
 
 #[derive(Debug, Clone, Serialize)]
