@@ -263,6 +263,15 @@ pub struct TemplateItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SaveTemplateItemRequest {
+    pub skill_ref_type: String,
+    pub skill_ref: String,
+    pub display_name: Option<String>,
+    pub order_index: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TemplateRecord {
     pub id: String,
     pub name: String,
@@ -283,5 +292,35 @@ pub struct SaveTemplateRequest {
     pub name: String,
     pub description: Option<String>,
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub items: Vec<SaveTemplateItemRequest>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InjectTemplateRequest {
+    pub template_id: String,
+    pub project_root: String,
+    pub target_type: String,
+    pub target_agent_id: Option<String>,
+    pub custom_relative_path: Option<String>,
+    pub install_mode: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InjectTemplateItemResult {
+    pub skill_id: String,
+    pub skill_name: String,
+    pub target_path: String,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InjectTemplateResult {
+    pub installed: Vec<InjectTemplateItemResult>,
+    pub skipped: Vec<InjectTemplateItemResult>,
+    pub failed: Vec<InjectTemplateItemResult>,
 }
 

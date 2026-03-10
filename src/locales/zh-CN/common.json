@@ -161,14 +161,12 @@
   },
   "templates": {
     "title": "模板",
-    "description": "当前模板仅用于创建基础模板记录。你现在只需填写名称、描述和标签。",
+    "description": "模板由统一仓库中的多个 skills 引用组成。创建和编辑都通过弹窗完成，注入时再选择项目目录、目标标签或自定义相对目录，以及 symlink/copy 模式。",
     "create": "新建模板",
-    "createTitle": "创建模板",
-    "editTitle": "编辑模板",
     "listTitle": "模板列表",
     "count": "共 {{count}} 个模板",
     "loading": "正在读取模板...",
-    "empty": "还没有模板，先创建一个空模板。",
+    "empty": "还没有模板，先创建一个 skills 组合模板。",
     "noDescription": "暂无描述。",
     "noTags": "暂无标签",
     "fields": {
@@ -181,11 +179,60 @@
       "description": "适用于新项目的 skills 组合",
       "tags": "react, vite, typescript"
     },
-    "emptyTemplateNotice": "当前版本只创建空模板，不配置模板条目，也不执行模板注入。后续会在模板详情中从统一仓库选择 skills。",
     "save": "保存模板",
     "saving": "保存中...",
     "delete": "删除模板",
-    "deleting": "删除中..."
+    "deleting": "删除中...",
+    "card": {
+      "skillCount": "{{count}} 个 skills",
+      "missingCount": "{{count}} 个缺失"
+    },
+    "editor": {
+      "createTitle": "创建模板",
+      "editTitle": "编辑模板",
+      "subtitle": "模板只记录统一仓库中的 skills 引用，不保存实际文件。",
+      "selectedSkills": "已选 Skills",
+      "selectedCount": "共 {{count}} 项",
+      "emptySelected": "还没有选择任何 skill。先从右侧统一仓库列表添加。",
+      "missingSkill": "统一仓库中已缺失",
+      "removeSkill": "移除",
+      "repositorySkills": "统一仓库 Skills",
+      "repositoryCount": "共 {{count}} 项",
+      "repositorySource": "统一仓库",
+      "searchSkills": "搜索统一仓库中的 skill",
+      "noRepositorySkills": "没有可添加的统一仓库 skill，或都已加入当前模板。",
+      "addSkill": "添加"
+    },
+    "inject": {
+      "open": "注入",
+      "title": "模板注入",
+      "subtitle": "将“{{name}}”中的 skills 注入到项目目录",
+      "projectRoot": "项目根路径",
+      "projectRootPlaceholder": "例如 E:\\project\\my-app",
+      "projectPicker": "目录选择器",
+      "chooseDirectory": "选择目录",
+      "targetTitle": "目标目录",
+      "targetTag": "使用标签目录",
+      "targetCustom": "使用自定义相对目录",
+      "customRelativePath": "自定义相对目录",
+      "customRelativePathPlaceholder": "例如 .company/skills/vue",
+      "modeTitle": "注入模式",
+      "modes": {
+        "symlink": "软链接",
+        "copy": "复制"
+      },
+      "previewTitle": "注入预览",
+      "validSkills": "有效 skills：{{count}}",
+      "missingSkills": "缺失 skills：{{count}}",
+      "noTargetPreview": "请选择项目路径与目标目录后预览最终注入路径。",
+      "confirm": "开始注入",
+      "injecting": "注入中...",
+      "result": {
+        "installed": "已安装：{{count}}",
+        "skipped": "已跳过：{{count}}",
+        "failed": "失败：{{count}}"
+      }
+    }
   },
   "common": {
     "comingSoon": "即将开发",

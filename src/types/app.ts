@@ -210,11 +210,22 @@ export interface TemplateItem {
   orderIndex: number
 }
 
+export interface SaveTemplateItemRequest {
+  skillRefType: string
+  skillRef: string
+  displayName?: string | null
+  orderIndex?: number | null
+}
+
 export interface TemplateRecord {
   id: string
   name: string
   description?: string | null
   tags: string[]
+  targetAgents: string[]
+  scope: string
+  isBuiltin: boolean
+  items: TemplateItem[]
   createdAt: number
   updatedAt: number
 }
@@ -224,5 +235,28 @@ export interface SaveTemplateRequest {
   name: string
   description?: string | null
   tags: string[]
+  items: SaveTemplateItemRequest[]
+}
+
+export interface InjectTemplateRequest {
+  templateId: string
+  projectRoot: string
+  targetType: 'tag' | 'custom'
+  targetAgentId?: string | null
+  customRelativePath?: string | null
+  installMode: 'symlink' | 'copy'
+}
+
+export interface InjectTemplateItemResult {
+  skillId: string
+  skillName: string
+  targetPath: string
+  reason?: string | null
+}
+
+export interface InjectTemplateResult {
+  installed: InjectTemplateItemResult[]
+  skipped: InjectTemplateItemResult[]
+  failed: InjectTemplateItemResult[]
 }
 

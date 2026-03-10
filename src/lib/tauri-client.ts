@@ -16,6 +16,8 @@ import type {
   SaveTemplateRequest,
   TemplateRecord,
   DistributionResult,
+  InjectTemplateRequest,
+  InjectTemplateResult,
 } from '../types/app'
 
 export const bootstrapApp = () => invoke<BootstrapPayload>('bootstrap_app')
@@ -61,4 +63,7 @@ export const saveTemplate = (request: SaveTemplateRequest) =>
 
 export const deleteTemplate = (templateId: string) =>
   invoke<void>('delete_template', { templateId })
+
+export const injectTemplate = (request: InjectTemplateRequest) =>
+  invoke<InjectTemplateResult>('inject_template', { request })
 

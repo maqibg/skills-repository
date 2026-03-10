@@ -5,9 +5,10 @@ use crate::{
         app_state::AppState,
         types::{
             AgentGlobalScanRequest, AgentGlobalScanResult, AppSettings, DistributionRequest,
-            DistributionResult, InstallSkillRequest, InstallSkillResult, MarketSearchRequest,
-            MarketSearchResponse, RepositorySkillDetail, RepositorySkillSummary,
-            RepositoryUninstallResult, SaveTemplateRequest, SecurityReport, TemplateRecord,
+            DistributionResult, InjectTemplateRequest, InjectTemplateResult, InstallSkillRequest,
+            InstallSkillResult, MarketSearchRequest, MarketSearchResponse, RepositorySkillDetail,
+            RepositorySkillSummary, RepositoryUninstallResult, SaveTemplateRequest,
+            SecurityReport, TemplateRecord,
         },
     },
     repositories::security as security_repository,
@@ -81,6 +82,15 @@ pub fn delete_template(state: State<'_, AppState>, template_id: String) -> Resul
     log::info!("delete_template invoked");
     templates::delete_template(&state.paths.db_file, &template_id)
         .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn inject_template(
+    state: State<'_, AppState>,
+    request: InjectTemplateRequest,
+) -> Result<InjectTemplateResult, String> {
+    log::info!("inject_template invoked");
+    templates::inject_template(&state, &request).map_err(|error| error.to_string())
 }
 
 #[tauri::command]

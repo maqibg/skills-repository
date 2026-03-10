@@ -1,49 +1,60 @@
 import { create } from 'zustand'
 import {
   deleteTemplate as deleteTemplateCommand,
+  injectTemplate as injectTemplateCommand,
+  listRepositorySkills as listRepositorySkillsCommand,
   listTemplates as listTemplatesCommand,
   saveTemplate as saveTemplateCommand,
 } from '../lib/tauri-client'
-import type { SaveTemplateRequest, TemplateRecord } from '../types/app'
+import type {
+  InjectTemplateRequest,
+  InjectTemplateResult,
+  RepositorySkillSummary,
+  SaveTemplateRequest,
+  TemplateRecord,
+} from '../types/app'
 
 interface TemplatesStoreState {
   templates: TemplateRecord[]
-  selectedTemplateId: string | null
+  repositorySkills: RepositorySkillSummary[]
   loading: boolean
   saving: boolean
   deleting: boolean
+  injecting: boolean
   loaded: boolean
   error: string | null
+  lastInjectResult: InjectTemplateResult | null
   refresh: () => Promise<void>
-  selectTemplate: (templateId: string | null) => void
   saveTemplate: (request: SaveTemplateRequest) => Promise<TemplateRecord>
   deleteTemplate: (templateId: string) => Promise<void>
+  injectTemplate: (request: InjectTemplateRequest) => Promise<InjectTemplateResult>
+  clearInjectResult: () => void
 }
 
 const toErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error)
 
-export const useTemplatesStore = create<TemplatesStoreState>((set, get) => ({
+export const useTemplatesStore = create<TemplatesStoreState>((set) => ({
   templates: [],
-  selectedTemplateId: null,
+  repositorySkills: [],
   loading: false,
   saving: false,
   deleting: false,
+  injecting: false,
   loaded: false,
   error: null,
+  lastInjectResult: null,
   refresh: async () => {
     set({ loading: true, error: null })
     try {
-      const templates = await listTemplatesCommand()
-      const selectedTemplateId = get().selectedTemplateId
-      const nextSelectedId =
-        selectedTemplateId && templates.some((item) => item.id === selectedTemplateId)
-          ? selectedTemplateId
-          : null
+      const [templates, repositorySkills] = await Promise.all([
+        listTemplatesCommand(),
+        listRepositorySkillsCommand(),
+      ])
 
       set({
         templates,
-        selectedTemplateId: nextSelectedId,
+        repositorySkills,
         loading: false,
         loaded: true,
       })
@@ -55,9 +66,6 @@ export const useTemplatesStore = create<TemplatesStoreState>((set, get) => ({
       })
     }
   },
-  selectTemplate: (templateId) => {
-    set({ selectedTemplateId: templateId, error: null })
-  },
   saveTemplate: async (request) => {
     set({ saving: true, error: null })
     try {
@@ -65,7 +73,6 @@ export const useTemplatesStore = create<TemplatesStoreState>((set, get) => ({
       const templates = await listTemplatesCommand()
       set({
         templates,
-        selectedTemplateId: template.id,
         saving: false,
       })
       return template
@@ -81,7 +88,6 @@ export const useTemplatesStore = create<TemplatesStoreState>((set, get) => ({
       const templates = await listTemplatesCommand()
       set({
         templates,
-        selectedTemplateId: null,
         deleting: false,
       })
     } catch (error) {
@@ -89,4 +95,22 @@ export const useTemplatesStore = create<TemplatesStoreState>((set, get) => ({
       throw error
     }
   },
+  injectTemplate: async (request) => {
+    set({ injecting: true, error: null, lastInjectResult: null })
+    try {
+      const result = await injectTemplateCommand(request)
+      set({
+        injecting: false,
+        lastInjectResult: result,
+      })
+      return result
+    } catch (error) {
+      set({
+        injecting: false,
+        error: toErrorMessage(error),
+      })
+      throw error
+    }
+  },
+  clearInjectResult: () => set({ lastInjectResult: null }),
 }))

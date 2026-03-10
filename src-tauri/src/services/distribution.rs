@@ -14,7 +14,7 @@ use crate::{
     repositories::{distributions as distributions_repository, skills as skills_repository},
 };
 
-fn copy_dir_all(source: &Path, target: &Path) -> Result<()> {
+pub(crate) fn copy_dir_all(source: &Path, target: &Path) -> Result<()> {
     fs::create_dir_all(target)?;
 
     for entry in WalkDir::new(source) {
@@ -50,7 +50,7 @@ fn remove_existing_target(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn create_directory_symlink(source: &Path, target: &Path) -> Result<()> {
+pub(crate) fn create_directory_symlink(source: &Path, target: &Path) -> Result<()> {
     #[cfg(target_os = "windows")]
     {
         std::os::windows::fs::symlink_dir(source, target)

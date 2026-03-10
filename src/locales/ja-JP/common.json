@@ -161,14 +161,12 @@
   },
   "templates": {
     "title": "テンプレート",
-    "description": "現在のテンプレートは基本情報だけを保存します。名前、説明、タグを入力して空テンプレートを作成してください。",
+    "description": "テンプレートは統一リポジトリ内 skills の参照集合です。作成と編集はモーダルで行い、注入時にプロジェクトパス、タグまたはカスタム相対ディレクトリ、symlink/copy モードを選択します。",
     "create": "新規テンプレート",
-    "createTitle": "テンプレート作成",
-    "editTitle": "テンプレート編集",
     "listTitle": "テンプレート一覧",
     "count": "{{count}} 件のテンプレート",
     "loading": "テンプレートを読み込み中...",
-    "empty": "まだテンプレートがありません。まず空テンプレートを作成してください。",
+    "empty": "まだテンプレートがありません。まず skills の組み合わせテンプレートを作成してください。",
     "noDescription": "説明はありません。",
     "noTags": "タグはありません",
     "fields": {
@@ -181,11 +179,60 @@
       "description": "新規プロジェクト向けの skill バンドル",
       "tags": "react, vite, typescript"
     },
-    "emptyTemplateNotice": "このバージョンでは空テンプレートの作成のみ対応しています。テンプレート項目の設定やプロジェクト注入は後続で対応します。",
     "save": "テンプレート保存",
     "saving": "保存中...",
     "delete": "テンプレート削除",
-    "deleting": "削除中..."
+    "deleting": "削除中...",
+    "card": {
+      "skillCount": "{{count}} 件の skills",
+      "missingCount": "{{count}} 件不足"
+    },
+    "editor": {
+      "createTitle": "テンプレート作成",
+      "editTitle": "テンプレート編集",
+      "subtitle": "テンプレートは統一リポジトリ内の skills 参照だけを保存し、実ファイルは保持しません。",
+      "selectedSkills": "選択済み Skills",
+      "selectedCount": "{{count}} 件選択中",
+      "emptySelected": "まだ skill が選択されていません。右側の統一リポジトリ一覧から追加してください。",
+      "missingSkill": "統一リポジトリから欠落",
+      "removeSkill": "削除",
+      "repositorySkills": "統一リポジトリ Skills",
+      "repositoryCount": "{{count}} 件",
+      "repositorySource": "統一リポジトリ",
+      "searchSkills": "統一リポジトリ skills を検索",
+      "noRepositorySkills": "追加できる統一リポジトリ skill がないか、すでにすべて選択済みです。",
+      "addSkill": "追加"
+    },
+    "inject": {
+      "open": "注入",
+      "title": "テンプレート注入",
+      "subtitle": "「{{name}}」内の skills をプロジェクトへ注入します",
+      "projectRoot": "プロジェクトルートパス",
+      "projectRootPlaceholder": "例: E:\\project\\my-app",
+      "projectPicker": "ディレクトリ選択",
+      "chooseDirectory": "ディレクトリを選択",
+      "targetTitle": "ターゲットディレクトリ",
+      "targetTag": "タグディレクトリを使う",
+      "targetCustom": "カスタム相対ディレクトリを使う",
+      "customRelativePath": "カスタム相対ディレクトリ",
+      "customRelativePathPlaceholder": "例: .company/skills/vue",
+      "modeTitle": "注入モード",
+      "modes": {
+        "symlink": "シンボリックリンク",
+        "copy": "コピー"
+      },
+      "previewTitle": "注入プレビュー",
+      "validSkills": "有効 skills: {{count}}",
+      "missingSkills": "不足 skills: {{count}}",
+      "noTargetPreview": "プロジェクトパスとターゲットディレクトリを選ぶと最終注入先を表示します。",
+      "confirm": "skills を注入",
+      "injecting": "注入中...",
+      "result": {
+        "installed": "Installed: {{count}}",
+        "skipped": "Skipped: {{count}}",
+        "failed": "Failed: {{count}}"
+      }
+    }
   },
   "common": {
     "comingSoon": "今後対応",

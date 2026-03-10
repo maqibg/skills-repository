@@ -161,14 +161,12 @@
   },
   "templates": {
     "title": "Templates",
-    "description": "Templates currently store only basic metadata. Fill in name, description, and tags to create an empty template.",
+    "description": "Templates are reusable groups of skills from the unified repository. Creation and editing happen in modals, while injection chooses the project path, target tag or custom relative directory, and symlink/copy mode at runtime.",
     "create": "New template",
-    "createTitle": "Create template",
-    "editTitle": "Edit template",
     "listTitle": "Template list",
     "count": "{{count}} templates",
     "loading": "Loading templates...",
-    "empty": "No templates yet. Create an empty template first.",
+    "empty": "No templates yet. Create a reusable skill bundle first.",
     "noDescription": "No description provided.",
     "noTags": "No tags yet",
     "fields": {
@@ -181,11 +179,60 @@
       "description": "Bundle for a new project",
       "tags": "react, vite, typescript"
     },
-    "emptyTemplateNotice": "This build creates empty templates only. Template items and project injection will be added later after the canonical store flow is ready.",
     "save": "Save template",
     "saving": "Saving...",
     "delete": "Delete template",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "card": {
+      "skillCount": "{{count}} skills",
+      "missingCount": "{{count}} missing"
+    },
+    "editor": {
+      "createTitle": "Create template",
+      "editTitle": "Edit template",
+      "subtitle": "Templates store references to unified-repository skills and never copy the actual files.",
+      "selectedSkills": "Selected skills",
+      "selectedCount": "{{count}} selected",
+      "emptySelected": "No skills selected yet. Add skills from the unified repository list on the right.",
+      "missingSkill": "Missing from repository",
+      "removeSkill": "Remove",
+      "repositorySkills": "Unified repository skills",
+      "repositoryCount": "{{count}} available",
+      "repositorySource": "Unified repository",
+      "searchSkills": "Search repository skills",
+      "noRepositorySkills": "No repository skills are available to add, or all of them are already selected.",
+      "addSkill": "Add"
+    },
+    "inject": {
+      "open": "Inject",
+      "title": "Template injection",
+      "subtitle": "Inject skills from \"{{name}}\" into a project directory",
+      "projectRoot": "Project root path",
+      "projectRootPlaceholder": "For example E:\\project\\my-app",
+      "projectPicker": "Directory picker",
+      "chooseDirectory": "Choose directory",
+      "targetTitle": "Target directory",
+      "targetTag": "Use tag directory",
+      "targetCustom": "Use custom relative directory",
+      "customRelativePath": "Custom relative directory",
+      "customRelativePathPlaceholder": "For example .company/skills/vue",
+      "modeTitle": "Injection mode",
+      "modes": {
+        "symlink": "Symlink",
+        "copy": "Copy"
+      },
+      "previewTitle": "Injection preview",
+      "validSkills": "Valid skills: {{count}}",
+      "missingSkills": "Missing skills: {{count}}",
+      "noTargetPreview": "Choose a project path and target directory to preview the resolved injection path.",
+      "confirm": "Inject skills",
+      "injecting": "Injecting...",
+      "result": {
+        "installed": "Installed: {{count}}",
+        "skipped": "Skipped: {{count}}",
+        "failed": "Failed: {{count}}"
+      }
+    }
   },
   "common": {
     "comingSoon": "Coming soon",
