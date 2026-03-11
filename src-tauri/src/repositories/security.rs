@@ -47,6 +47,35 @@ pub fn list_security_reports(path: &Path) -> Result<Vec<SecurityReport>> {
     let conn = open_connection(path)?;
     let mut stmt = conn.prepare(
         "
+        WITH latest_reports AS (
+            SELECT
+                sr.rowid AS row_id,
+                sr.id,
+                sr.skill_id,
+                sr.scan_scope,
+                sr.level,
+                sr.score,
+                sr.blocked,
+                sr.issues_json,
+                sr.recommendations_json,
+                sr.scanned_files_json,
+                sr.engine_version,
+                sr.scanned_at
+            FROM security_reports sr
+            WHERE sr.skill_id IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM security_reports newer
+                  WHERE newer.skill_id = sr.skill_id
+                    AND (
+                        newer.scanned_at > sr.scanned_at
+                        OR (
+                            newer.scanned_at = sr.scanned_at
+                            AND newer.rowid > sr.rowid
+                        )
+                    )
+              )
+        )
         SELECT
             sr.id,
             sr.skill_id,
@@ -67,9 +96,9 @@ pub fn list_security_reports(path: &Path) -> Result<Vec<SecurityReport>> {
             sr.scanned_files_json,
             sr.engine_version,
             sr.scanned_at
-        FROM security_reports sr
+        FROM latest_reports sr
         LEFT JOIN skills s ON s.id = sr.skill_id
-        ORDER BY sr.scanned_at DESC
+        ORDER BY sr.scanned_at DESC, sr.row_id DESC
         ",
     )?;
 
@@ -106,8 +135,29 @@ pub fn list_security_reports(path: &Path) -> Result<Vec<SecurityReport>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::types::InstallSkillRequest;
     use crate::repositories::db::run_migrations;
+    use crate::repositories::skills as skills_repository;
     use tempfile::tempdir;
+
+    fn install_request(slug: &str, name: &str) -> InstallSkillRequest {
+        InstallSkillRequest {
+            provider: "github".into(),
+            market_skill_id: format!("{slug}-market"),
+            source_type: "github".into(),
+            source_url: format!("https://github.com/demo/{slug}"),
+            repo_url: Some(format!("https://github.com/demo/{slug}")),
+            download_url: Some(format!("https://github.com/demo/{slug}/archive/main.zip")),
+            package_ref: Some(format!("demo/{slug}")),
+            manifest_path: None,
+            skill_root: None,
+            name: name.into(),
+            slug: slug.into(),
+            version: Some("main".into()),
+            author: Some("tester".into()),
+            requested_targets: Vec::new(),
+        }
+    }
 
     #[test]
     fn saves_and_lists_security_reports() {
@@ -115,9 +165,18 @@ mod tests {
         let db_path = dir.path().join("security.db");
         run_migrations(&db_path).unwrap();
 
+        let skill_id = skills_repository::save_installed_skill(
+            &db_path,
+            &install_request("demo", "Demo Skill"),
+            "E:/skills/demo",
+            "medium",
+            false,
+        )
+        .unwrap();
+
         let report = SecurityReport {
             id: "report-1".into(),
-            skill_id: None,
+            skill_id: Some(skill_id),
             skill_name: None,
             source_path: Some("E:/tmp/demo".into()),
             scan_scope: "temp_install".into(),
@@ -146,5 +205,132 @@ mod tests {
         assert_eq!(loaded.len(), 1);
         assert_eq!(loaded[0].level, "medium");
         assert_eq!(loaded[0].issues.len(), 1);
+    }
+
+    #[test]
+    fn lists_only_latest_persisted_report_per_skill() {
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("security.db");
+        run_migrations(&db_path).unwrap();
+
+        let alpha_id = skills_repository::save_installed_skill(
+            &db_path,
+            &install_request("alpha", "Alpha"),
+            "E:/skills/alpha",
+            "safe",
+            false,
+        )
+        .unwrap();
+        let beta_id = skills_repository::save_installed_skill(
+            &db_path,
+            &install_request("beta", "Beta"),
+            "E:/skills/beta",
+            "safe",
+            false,
+        )
+        .unwrap();
+
+        save_security_report(
+            &db_path,
+            &SecurityReport {
+                id: "alpha-old".into(),
+                skill_id: Some(alpha_id.clone()),
+                skill_name: Some("Alpha".into()),
+                source_path: Some("E:/skills/alpha".into()),
+                scan_scope: "temp_install".into(),
+                level: "safe".into(),
+                score: 0,
+                blocked: false,
+                issues: Vec::new(),
+                recommendations: Vec::new(),
+                scanned_files: vec!["E:/skills/alpha/SKILL.md".into()],
+                engine_version: "phase2-rules-v1".into(),
+                scanned_at: 100,
+            },
+        )
+        .unwrap();
+        save_security_report(
+            &db_path,
+            &SecurityReport {
+                id: "alpha-new".into(),
+                skill_id: Some(alpha_id),
+                skill_name: Some("Alpha".into()),
+                source_path: Some("E:/skills/alpha".into()),
+                scan_scope: "rescan".into(),
+                level: "safe".into(),
+                score: 0,
+                blocked: false,
+                issues: Vec::new(),
+                recommendations: Vec::new(),
+                scanned_files: vec!["E:/skills/alpha/SKILL.md".into()],
+                engine_version: "phase2-rules-v1".into(),
+                scanned_at: 200,
+            },
+        )
+        .unwrap();
+        save_security_report(
+            &db_path,
+            &SecurityReport {
+                id: "beta-only".into(),
+                skill_id: Some(beta_id),
+                skill_name: Some("Beta".into()),
+                source_path: Some("E:/skills/beta".into()),
+                scan_scope: "temp_install".into(),
+                level: "medium".into(),
+                score: 40,
+                blocked: false,
+                issues: vec![SecurityIssue {
+                    rule_id: "network_fetch".into(),
+                    severity: "medium".into(),
+                    title: "Review required".into(),
+                    description: "demo".into(),
+                    file_path: Some("E:/skills/beta/install.sh".into()),
+                }],
+                recommendations: vec![SecurityRecommendation {
+                    action: "review_files".into(),
+                    description: "review".into(),
+                }],
+                scanned_files: vec!["E:/skills/beta/install.sh".into()],
+                engine_version: "phase2-rules-v1".into(),
+                scanned_at: 150,
+            },
+        )
+        .unwrap();
+        save_security_report(
+            &db_path,
+            &SecurityReport {
+                id: "transient-temp-scan".into(),
+                skill_id: None,
+                skill_name: None,
+                source_path: None,
+                scan_scope: "temp_install".into(),
+                level: "high".into(),
+                score: 90,
+                blocked: true,
+                issues: vec![SecurityIssue {
+                    rule_id: "shell_destructive".into(),
+                    severity: "high".into(),
+                    title: "Blocked".into(),
+                    description: "danger".into(),
+                    file_path: Some("E:/tmp/install.sh".into()),
+                }],
+                recommendations: vec![SecurityRecommendation {
+                    action: "block_install".into(),
+                    description: "blocked".into(),
+                }],
+                scanned_files: vec!["E:/tmp/install.sh".into()],
+                engine_version: "phase2-rules-v1".into(),
+                scanned_at: 300,
+            },
+        )
+        .unwrap();
+
+        let loaded = list_security_reports(&db_path).unwrap();
+
+        assert_eq!(loaded.len(), 2);
+        assert_eq!(loaded[0].id, "alpha-new");
+        assert_eq!(loaded[0].scan_scope, "rescan");
+        assert_eq!(loaded[1].id, "beta-only");
+        assert!(loaded.iter().all(|report| report.skill_id.is_some()));
     }
 }
