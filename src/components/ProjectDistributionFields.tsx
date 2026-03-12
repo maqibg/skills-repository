@@ -65,8 +65,8 @@ export function ProjectDistributionFields({
   return (
     <>
       {showProjectRoot ? (
-        <section className="grid gap-4 md:grid-cols-[1.3fr_0.7fr]">
-          <label className="form-control">
+        <section className="grid gap-4 md:grid-cols-[1fr_auto] items-end">
+          <label className="form-control w-full">
             <span className="label-text">{labelProjectRoot}</span>
             <input
               className="input input-bordered"
@@ -76,8 +76,12 @@ export function ProjectDistributionFields({
             />
           </label>
           <div className="form-control">
-            <span className="label-text">{labelProjectPicker}</span>
-            <button className="btn btn-outline" onClick={onChooseProjectDirectory}>
+            <span className="label-text mb-2 block opacity-0 select-none">.</span>
+            <button 
+              className="btn h-12 min-h-[3rem] border-[var(--border-subtle)] bg-base-200/50 text-base-content hover:bg-base-200 hover:border-[var(--border-subtle)]" 
+              onClick={onChooseProjectDirectory}
+            >
+              <i className="hn hn-folder-open mr-2"></i>
               {labelChooseDirectory}
             </button>
           </div>

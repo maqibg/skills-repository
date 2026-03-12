@@ -35,6 +35,18 @@
   --border: 1px;
   --depth: 1;
   --noise: 0;
+
+  /* Custom Semantic Tokens - Light Mode */
+  --bg-modal-overlay: rgba(0, 0, 0, 0.4);
+  --bg-modal-panel: oklch(100% 0 0);
+  --border-subtle: oklch(90% 0.01 240);
+  --border-highlight: var(--color-primary);
+  --shadow-neon-primary: 0 0 10px rgba(var(--color-primary), 0.2);
+  --text-inverse: oklch(100% 0 0);
+  --bg-input: oklch(97% 0.01 240);
+  --bg-input-focus: oklch(100% 0 0);
+  --card-bg: oklch(100% 0 0);
+  --card-border: oklch(92% 0.01 240);
 }
 
 @plugin "daisyui/theme" {
@@ -42,32 +54,44 @@
   default: false;
   prefersdark: true;
   color-scheme: dark;
-  --color-base-100: oklch(22% 0.02 245);
-  --color-base-200: oklch(18% 0.02 245);
-  --color-base-300: oklch(28% 0.02 245);
+  --color-base-100: oklch(20% 0.02 260); /* Card Background #161821 */
+  --color-base-200: oklch(15% 0.01 260); /* App Background #0A0B10 */
+  --color-base-300: oklch(25% 0.02 260); /* Borders */
   --color-base-content: oklch(94% 0.01 245);
-  --color-primary: oklch(67% 0.16 190);
-  --color-primary-content: oklch(17% 0.03 190);
-  --color-secondary: oklch(72% 0.12 215);
-  --color-secondary-content: oklch(18% 0.02 215);
-  --color-accent: oklch(72% 0.15 145);
+  --color-primary: oklch(56% 0.17 190); /* Harmonized with Light Mode Primary */
+  --color-primary-content: oklch(98% 0.02 190);
+  --color-secondary: oklch(64% 0.14 210); /* Harmonized with Light Mode Secondary */
+  --color-secondary-content: oklch(98% 0.01 210);
+  --color-accent: oklch(70% 0.15 145);
   --color-accent-content: oklch(18% 0.02 145);
   --color-neutral: oklch(32% 0.02 240);
   --color-neutral-content: oklch(96% 0.01 240);
   --color-info: oklch(70% 0.12 240);
   --color-info-content: oklch(16% 0.02 240);
-  --color-success: oklch(72% 0.16 145);
-  --color-success-content: oklch(16% 0.02 145);
-  --color-warning: oklch(80% 0.16 80);
-  --color-warning-content: oklch(20% 0.03 80);
-  --color-error: oklch(68% 0.22 28);
-  --color-error-content: oklch(16% 0.02 28);
-  --radius-box: 0.9rem;
-  --radius-field: 0.7rem;
-  --radius-selector: 0.7rem;
+  --color-success: oklch(66% 0.18 145); /* Harmonized Green */
+  --color-success-content: oklch(98% 0.01 145);
+  --color-warning: oklch(79% 0.16 80);
+  --color-warning-content: oklch(26% 0.03 80);
+  --color-error: oklch(63% 0.22 28); /* Harmonized Red */
+  --color-error-content: oklch(98% 0.01 28);
+  --radius-box: 0.5rem; /* 8px */
+  --radius-field: 0.3rem;
+  --radius-selector: 0.3rem;
   --border: 1px;
   --depth: 1;
   --noise: 0;
+
+  /* Custom Semantic Tokens - Dark Mode */
+  --bg-modal-overlay: rgba(0, 0, 0, 0.6);
+  --bg-modal-panel: #161821;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-highlight: var(--color-primary);
+  --shadow-neon-primary: 0 0 20px rgba(var(--color-primary), 0.2);
+  --text-inverse: oklch(100% 0 0);
+  --bg-input: rgba(0, 0, 0, 0.2);
+  --bg-input-focus: rgba(0, 0, 0, 0.4);
+  --card-bg: #161821;
+  --card-border: rgba(255, 255, 255, 0.1);
 }
 
 @custom-variant dark (&:where([data-theme=skills-dark], [data-theme=skills-dark] *));

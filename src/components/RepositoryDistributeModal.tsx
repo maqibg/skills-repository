@@ -118,72 +118,93 @@ export function RepositoryDistributeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-base-content/45 p-4 backdrop-blur-sm md:p-6">
-      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] border border-base-300 bg-base-100 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-base-300 px-6 py-5 md:px-7">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-modal-overlay)] p-4 backdrop-blur-sm transition-all duration-300 md:p-6">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-modal-panel)] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] bg-base-100/50 px-8 py-6 backdrop-blur-md md:px-8">
           <div>
-            <h3 className="text-2xl font-semibold">{t('repository.distribute.title')}</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-base-content/60">
+            <h3 className="text-2xl font-bold text-base-content">{t('repository.distribute.title')}</h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-base-content/60">
               {t('repository.distribute.subtitle')}
             </p>
           </div>
-          <button className="btn btn-ghost btn-circle" aria-label={t('common.close')} onClick={onClose}>
-            <span className="text-xl font-semibold leading-none">x</span>
+          <button 
+            className="btn btn-circle btn-ghost btn-sm text-base-content/50 hover:bg-base-content/10 hover:text-base-content" 
+            aria-label={t('common.close')} 
+            onClick={onClose}
+          >
+            <i className="hn hn-times text-lg"></i>
           </button>
         </div>
 
-        <div className="space-y-6 overflow-y-auto p-6 md:p-7">
-          <section className="rounded-[24px] border border-base-300 bg-base-200/50 p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-6 overflow-y-auto p-8 md:p-8 custom-scrollbar">
+          
+          {/* Skill Selection Section */}
+          <section className="rounded-lg border border-[var(--border-subtle)] bg-base-200/20 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h4 className="text-lg font-semibold">{t('repository.distribute.skillsTitle')}</h4>
-                <p className="mt-1 text-sm text-base-content/60">
+                <h4 className="text-lg font-bold text-base-content">{t('repository.distribute.skillsTitle')}</h4>
+                <p className="mt-1 text-sm text-base-content/50">
                   {t('repository.distribute.selectedCount', { count: selectedSkillIds.length })}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className="btn btn-sm btn-outline" onClick={selectAllVisible}>
+                <button className="btn btn-xs btn-ghost text-primary hover:bg-primary/10" onClick={selectAllVisible}>
                   {t('repository.distribute.selectAll')}
                 </button>
-                <button className="btn btn-sm btn-ghost" onClick={clearSelection}>
+                <button className="btn btn-xs btn-ghost text-base-content/50 hover:text-base-content" onClick={clearSelection}>
                   {t('repository.distribute.clearSelection')}
                 </button>
               </div>
             </div>
 
-            <label className="input input-bordered mt-5 flex items-center gap-2">
-              <i className="hn hn-search text-base-content/50" aria-hidden />
+            <div className="relative mt-6">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                <i className="hn hn-search text-base-content/40"></i>
+              </div>
               <input
-                className="grow"
+                className="input input-bordered h-12 w-full border-[var(--border-subtle)] bg-[var(--bg-input)] pl-11 text-base-content placeholder:text-base-content/30 focus:border-primary/50 focus:bg-[var(--bg-input-focus)] focus:outline-none"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('repository.distribute.searchPlaceholder')}
               />
-            </label>
+            </div>
 
-            <div className="mt-5 max-h-[18rem] space-y-3 overflow-y-auto pr-1">
+            <div className="mt-6 max-h-[18rem] space-y-3 overflow-y-auto pr-1 custom-scrollbar">
               {filteredSkills.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-base-300 bg-base-100 p-5 text-sm text-base-content/60">
-                  {t('repository.distribute.emptySearch')}
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--border-subtle)] bg-base-100/50 p-8 text-center">
+                  <div className="mb-3 rounded-full bg-base-200 p-3 text-base-content/20">
+                    <i className="hn hn-search text-2xl"></i>
+                  </div>
+                  <p className="text-sm text-base-content/40">
+                    {t('repository.distribute.emptySearch')}
+                  </p>
                 </div>
               ) : (
                 filteredSkills.map((skill) => (
                   <label
                     key={skill.id}
-                    className="flex cursor-pointer items-start gap-4 rounded-[20px] border border-base-300 bg-base-100 p-4"
+                    className={`group flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all duration-200 ${
+                      selectedSkillIds.includes(skill.id)
+                        ? 'border-primary/50 bg-primary/5 shadow-[inset_0_0_10px_rgba(var(--color-primary),0.05)]' 
+                        : 'border-[var(--border-subtle)] bg-base-100 hover:border-[var(--border-subtle)] hover:bg-base-100/80'
+                    }`}
                   >
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-sm mt-1"
+                      className="checkbox checkbox-sm checkbox-primary border-[var(--border-subtle)] bg-base-100"
                       checked={selectedSkillIds.includes(skill.id)}
                       onChange={() => toggleSkill(skill.id)}
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold">{skill.name}</p>
-                        <span className="badge badge-outline">{skill.slug}</span>
+                        <p className={`font-bold ${selectedSkillIds.includes(skill.id) ? 'text-primary' : 'text-base-content/90'}`}>
+                          {skill.name}
+                        </p>
+                        <span className="badge badge-outline border-[var(--border-subtle)] text-xs text-base-content/50">{skill.slug}</span>
                       </div>
-                      <p className="mt-1 text-xs text-base-content/60">
+                      <p className="mt-1 text-xs text-base-content/40">
                         {skill.sourceMarket ?? t('repository.sourceUnknown')}
                       </p>
                     </div>
@@ -193,26 +214,39 @@ export function RepositoryDistributeModal({
             </div>
           </section>
 
-          <section className="rounded-box border border-base-300 bg-base-200/50 p-4">
-            <h4 className="font-semibold">{t('repository.distribute.scopeTitle')}</h4>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <label className="label cursor-pointer gap-2">
+          {/* Scope Selection */}
+          <section className="rounded-lg border border-[var(--border-subtle)] bg-base-200/20 p-6">
+            <h4 className="font-bold text-base-content mb-4">{t('repository.distribute.scopeTitle')}</h4>
+            <div className="flex flex-wrap gap-4">
+              <label className={`flex cursor-pointer items-center gap-3 rounded-lg border px-5 py-3 transition-all ${
+                targetScope === 'project' 
+                  ? 'border-primary/50 bg-primary/5' 
+                  : 'border-[var(--border-subtle)] bg-base-100 hover:border-[var(--border-subtle)]'
+              }`}>
                 <input
                   type="radio"
-                  className="radio radio-sm"
+                  className="radio radio-sm radio-primary border-[var(--border-subtle)]"
                   checked={targetScope === 'project'}
                   onChange={() => setTargetScope('project')}
                 />
-                <span>{t('repository.distribute.scopeProject')}</span>
+                <span className={targetScope === 'project' ? 'text-base-content' : 'text-base-content/70'}>
+                  {t('repository.distribute.scopeProject')}
+                </span>
               </label>
-              <label className="label cursor-pointer gap-2">
+              <label className={`flex cursor-pointer items-center gap-3 rounded-lg border px-5 py-3 transition-all ${
+                targetScope === 'global' 
+                  ? 'border-primary/50 bg-primary/5' 
+                  : 'border-[var(--border-subtle)] bg-base-100 hover:border-[var(--border-subtle)]'
+              }`}>
                 <input
                   type="radio"
-                  className="radio radio-sm"
+                  className="radio radio-sm radio-primary border-[var(--border-subtle)]"
                   checked={targetScope === 'global'}
                   onChange={() => setTargetScope('global')}
                 />
-                <span>{t('repository.distribute.scopeGlobal')}</span>
+                <span className={targetScope === 'global' ? 'text-base-content' : 'text-base-content/70'}>
+                  {t('repository.distribute.scopeGlobal')}
+                </span>
               </label>
             </div>
           </section>
@@ -252,16 +286,16 @@ export function RepositoryDistributeModal({
             renderModeLabel={(mode) => t(`repository.distribute.modes.${mode}`)}
           />
 
-          <section className="rounded-box border border-base-300 bg-base-200/50 p-4">
-            <h4 className="font-semibold">{t('repository.distribute.previewListTitle')}</h4>
+          <section className="rounded-lg border border-[var(--border-subtle)] bg-base-200/20 p-6">
+            <h4 className="font-bold text-base-content mb-4">{t('repository.distribute.previewListTitle')}</h4>
             {selectedSkills.length === 0 ? (
-              <div className="mt-4 rounded-box border border-dashed border-base-300 bg-base-100 p-4 text-sm text-base-content/60">
+              <div className="rounded-lg border border-dashed border-[var(--border-subtle)] bg-base-100/50 p-6 text-center text-sm text-base-content/40">
                 {t('repository.distribute.noSkillsSelected')}
               </div>
             ) : (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {selectedSkills.map((skill) => (
-                  <span key={skill.id} className="badge badge-outline">
+                  <span key={skill.id} className="badge badge-lg border-[var(--border-subtle)] bg-base-100 text-base-content/80 pl-3 pr-3 h-8">
                     {skill.name}
                   </span>
                 ))}
@@ -270,8 +304,11 @@ export function RepositoryDistributeModal({
           </section>
 
           {error ? (
-            <section className="rounded-box border border-error/30 bg-error/5 p-4 text-sm leading-6 text-error">
-              {error}
+            <section className="rounded-lg border border-error/30 bg-error/10 p-4 text-sm leading-6 text-error shadow-[0_0_15px_rgba(255,0,0,0.1)]">
+              <div className="flex items-center gap-3">
+                <i className="hn hn-exclaimation text-lg"></i>
+                {error}
+              </div>
             </section>
           ) : null}
 
@@ -283,12 +320,15 @@ export function RepositoryDistributeModal({
           />
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-base-300 px-6 py-5 md:px-7">
-          <button className="btn btn-ghost" onClick={onClose}>
+        <div className="flex justify-end gap-3 border-t border-[var(--border-subtle)] bg-base-100/50 px-8 py-6 backdrop-blur-md md:px-8">
+          <button 
+            className="btn btn-ghost text-base-content/60 hover:bg-base-content/10 hover:text-base-content" 
+            onClick={onClose}
+          >
             {t('common.close')}
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary h-10 min-h-[2.5rem] border-none bg-primary px-8 text-[var(--text-inverse)] shadow-[var(--shadow-neon-primary)] hover:shadow-[0_0_30px_rgba(var(--color-primary),0.6)] hover:bg-white disabled:bg-base-300 disabled:text-base-content/30 disabled:shadow-none"
             disabled={!canSubmit}
             onClick={() =>
               void onSubmit({
@@ -302,7 +342,17 @@ export function RepositoryDistributeModal({
               }).catch(() => undefined)
             }
           >
-            {distributing ? t('repository.distribute.distributing') : t('repository.distribute.confirm')}
+            {distributing ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                {t('repository.distribute.distributing')}
+              </>
+            ) : (
+              <>
+                <i className="hn hn-share mr-2"></i>
+                {t('repository.distribute.confirm')}
+              </>
+            )}
           </button>
         </div>
       </div>

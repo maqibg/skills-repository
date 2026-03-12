@@ -7,6 +7,7 @@ import type {
   RepositoryImportSourceKind,
   ResolveRepositoryImportResult,
 } from '../types/app'
+import { normalizeDisplayPath } from '../lib/normalize-display-path'
 
 interface RepositoryImportModalProps {
   open: boolean
@@ -33,16 +34,6 @@ interface ImportBatchItemResult {
 }
 
 const sourceKinds: RepositoryImportSourceKind[] = ['github', 'local_directory', 'local_zip']
-
-const normalizeDisplayPath = (value: string) => {
-  if (value.startsWith('\\\\?\\UNC\\')) {
-    return `\\\\${value.slice('\\\\?\\UNC\\'.length)}`
-  }
-  if (value.startsWith('\\\\?\\')) {
-    return value.slice('\\\\?\\'.length)
-  }
-  return value
-}
 
 export function RepositoryImportModal({
   open,
@@ -254,27 +245,38 @@ export function RepositoryImportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-base-content/45 p-4 backdrop-blur-sm md:p-6">
-      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] border border-base-300 bg-base-100 shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-base-300 px-6 py-5 md:px-7">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-modal-overlay)] p-4 backdrop-blur-sm transition-all duration-300 md:p-6">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-modal-panel)] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] bg-base-100/50 px-8 py-6 backdrop-blur-md md:px-8">
           <div>
-            <h3 className="text-2xl font-semibold">{t('repository.import.title')}</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-base-content/60">
+            <h3 className="text-2xl font-bold text-base-content">{t('repository.import.title')}</h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-base-content/60">
               {t('repository.import.subtitle')}
             </p>
           </div>
-          <button className="btn btn-ghost btn-circle" aria-label={t('common.close')} onClick={onClose}>
-            <span className="text-xl font-semibold leading-none">x</span>
+          <button 
+            className="btn btn-circle btn-ghost btn-sm text-base-content/50 hover:bg-base-content/10 hover:text-base-content" 
+            aria-label={t('common.close')} 
+            onClick={onClose}
+          >
+            <i className="hn hn-times text-lg"></i>
           </button>
         </div>
 
-        <div className="space-y-6 overflow-y-auto p-6 md:p-7">
-          <section className="rounded-[24px] border border-base-300 bg-base-200/50 p-5">
+        <div className="space-y-6 overflow-y-auto p-8 md:p-8 custom-scrollbar">
+          {/* Source Selection Section */}
+          <section className="rounded-lg border border-[var(--border-subtle)] bg-base-200/20 p-6">
             <div className="flex flex-wrap gap-3">
               {sourceKinds.map((kind) => (
                 <button
                   key={kind}
-                  className={sourceKind === kind ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'}
+                  className={`btn h-10 min-h-[2.5rem] px-6 transition-all duration-200 ${
+                    sourceKind === kind 
+                      ? 'btn-primary border-none bg-primary text-[var(--text-inverse)] shadow-[var(--shadow-neon-primary)]' 
+                      : 'btn-outline border-[var(--border-subtle)] text-base-content/70 hover:border-primary/50 hover:text-base-content'
+                  }`}
                   onClick={() => {
                     setSourceKind(kind)
                     setInput('')
@@ -283,123 +285,156 @@ export function RepositoryImportModal({
                     onReset()
                   }}
                 >
+                  {kind === 'github' && <i className="hn hn-github mr-2"></i>}
+                  {kind === 'local_directory' && <i className="hn hn-folder mr-2"></i>}
+                  {kind === 'local_zip' && <i className="hn hn-file-import mr-2"></i>}
                   {t(`repository.import.sourceKinds.${kind}`)}
                 </button>
               ))}
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto]">
-              <label className="form-control">
-                <span className="label-text">{t('repository.import.inputLabel')}</span>
-                <input
-                  className="input input-bordered"
-                  value={input}
-                  onChange={(event) => setInputAndReset(event.target.value)}
-                  placeholder={t(`repository.import.placeholders.${sourceKind}`)}
-                />
-              </label>
+            <div className="mt-6 grid gap-4 md:grid-cols-[1fr_auto]">
+              <div className="form-control w-full">
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <i className="hn hn-search text-base-content/40"></i>
+                  </div>
+                  <input
+                    className="input input-bordered h-12 w-full border-[var(--border-subtle)] bg-[var(--bg-input)] pl-11 text-base-content placeholder:text-base-content/30 focus:border-primary/50 focus:bg-[var(--bg-input-focus)] focus:outline-none"
+                    value={input}
+                    onChange={(event) => setInputAndReset(event.target.value)}
+                    placeholder={t(`repository.import.placeholders.${sourceKind}`)}
+                  />
+                </div>
+              </div>
 
               {sourceKind === 'local_directory' ? (
-                <div className="form-control">
-                  <span className="label-text">{t('repository.import.pickDirectory')}</span>
-                  <button className="btn btn-outline" onClick={() => void pickDirectory()}>
-                    {t('repository.import.browse')}
-                  </button>
-                </div>
+                <button 
+                  className="btn h-12 min-h-[3rem] border-[var(--border-subtle)] bg-base-200/50 text-base-content hover:bg-base-200 hover:border-[var(--border-subtle)]" 
+                  onClick={() => void pickDirectory()}
+                >
+                  <i className="hn hn-folder-open mr-2"></i>
+                  {t('repository.import.browse')}
+                </button>
               ) : null}
 
               {sourceKind === 'local_zip' ? (
-                <div className="form-control">
-                  <span className="label-text">{t('repository.import.pickZip')}</span>
-                  <button className="btn btn-outline" onClick={() => void pickZipFile()}>
-                    {t('repository.import.browse')}
-                  </button>
-                </div>
+                <button 
+                  className="btn h-12 min-h-[3rem] border-[var(--border-subtle)] bg-base-200/50 text-base-content hover:bg-base-200 hover:border-[var(--border-subtle)]" 
+                  onClick={() => void pickZipFile()}
+                >
+                  <i className="hn hn-folder-open mr-2"></i>
+                  {t('repository.import.browse')}
+                </button>
               ) : null}
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-sm text-base-content/60">{t('repository.import.supportedHint')}</div>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-4">
+              <div className="flex items-center gap-2 text-sm text-base-content/50">
+                <i className="hn hn-info-circle"></i>
+                {t('repository.import.supportedHint')}
+              </div>
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary h-10 min-h-[2.5rem] border-none bg-primary px-8 text-[var(--text-inverse)] shadow-[var(--shadow-neon-primary)] hover:shadow-[0_0_25px_rgba(var(--color-primary),0.5)] disabled:bg-base-300 disabled:text-base-content/30"
                 disabled={!canResolve}
                 onClick={() => {
                   void onResolve(sourceKind, input.trim()).catch(() => undefined)
                 }}
               >
-                {resolving ? t('repository.import.resolving') : t('repository.import.resolve')}
+                {resolving ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    {t('repository.import.resolving')}
+                  </>
+                ) : (
+                  <>
+                    <i className="hn hn-check mr-2"></i>
+                    {t('repository.import.resolve')}
+                  </>
+                )}
               </button>
             </div>
           </section>
 
           {importError ? (
-            <section className="rounded-[24px] border border-error/30 bg-error/5 p-4 text-sm leading-6 text-error">
-              {importError}
+            <section className="rounded-lg border border-error/30 bg-error/10 p-4 text-sm leading-6 text-error shadow-[0_0_15px_rgba(255,0,0,0.1)]">
+              <div className="flex items-center gap-3">
+                <i className="hn hn-exclaimation text-lg"></i>
+                {importError}
+              </div>
             </section>
           ) : null}
 
           {importBlockedLevel ? (
-            <section className="rounded-[24px] border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
-              {t('repository.import.blocked', { level: importBlockedLevel })}
+            <section className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning shadow-[0_0_15px_rgba(255,165,0,0.1)]">
+              <div className="flex items-center gap-3">
+                <i className="hn hn-shield text-lg"></i>
+                {t('repository.import.blocked', { level: importBlockedLevel })}
+              </div>
             </section>
           ) : null}
 
           {activeResolvedImport ? (
             <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-              <article className="rounded-[24px] border border-base-300 bg-base-200/50 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+              {/* Candidates List */}
+              <article className="flex flex-col rounded-lg border border-[var(--border-subtle)] bg-base-200/30">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-subtle)] bg-base-100/50 p-5">
                   <div>
-                    <h4 className="text-lg font-semibold">{t('repository.import.candidatesTitle')}</h4>
-                    <p className="mt-1 text-sm text-base-content/60">
+                    <h4 className="text-lg font-bold text-base-content">{t('repository.import.candidatesTitle')}</h4>
+                    <p className="mt-1 text-sm text-base-content/50">
                       {t('repository.import.candidatesCount', {
                         count: activeResolvedImport.candidates.length,
                       })}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span className="badge badge-outline">
-                      {t(`repository.import.sourceKinds.${activeResolvedImport.sourceKind}`)}
-                    </span>
-                    <button className="btn btn-xs btn-outline" onClick={selectAllCandidates}>
+                    <button className="btn btn-xs btn-ghost text-primary hover:bg-primary/10" onClick={selectAllCandidates}>
                       {t('repository.import.selectAll')}
                     </button>
-                    <button className="btn btn-xs btn-ghost" onClick={clearSelectedCandidates}>
+                    <button className="btn btn-xs btn-ghost text-base-content/50 hover:text-base-content" onClick={clearSelectedCandidates}>
                       {t('repository.import.clearSelection')}
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-3">
+                <div className="flex-1 space-y-3 overflow-y-auto p-5 custom-scrollbar max-h-[400px]">
                   {activeResolvedImport.candidates.map((candidate) => {
                     const exists = existingSlugSet.has(candidate.slug)
+                    const isSelected = selectedManifestPaths.includes(candidate.manifestPath)
 
                     return (
                       <label
                         key={candidate.manifestPath}
-                        className="flex cursor-pointer items-start gap-4 rounded-[20px] border border-base-300 bg-base-100 p-4"
+                        className={`group flex cursor-pointer items-start gap-4 rounded-lg border p-4 transition-all duration-200 ${
+                          isSelected 
+                            ? 'border-primary/50 bg-primary/5 shadow-[inset_0_0_10px_rgba(var(--color-primary),0.05)]' 
+                            : 'border-[var(--border-subtle)] bg-base-100 hover:border-[var(--border-subtle)] hover:bg-base-200/50'
+                        }`}
                       >
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-sm mt-1"
-                          checked={selectedManifestPaths.includes(candidate.manifestPath)}
+                          className="checkbox checkbox-sm checkbox-primary mt-1 border-[var(--border-subtle)] bg-base-100"
+                          checked={isSelected}
                           onChange={() => toggleManifestPath(candidate.manifestPath)}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold">{candidate.name}</p>
-                            <span className="badge badge-outline">{candidate.slug}</span>
+                            <p className={`font-bold ${isSelected ? 'text-primary' : 'text-base-content/90'}`}>
+                              {candidate.name}
+                            </p>
+                            <span className="badge badge-outline border-[var(--border-subtle)] text-xs text-base-content/50">{candidate.slug}</span>
                             {exists ? (
-                              <span className="badge badge-info">{t('repository.import.existingBadge')}</span>
+                              <span className="badge badge-info badge-sm gap-1 bg-info/10 text-info border-0">
+                                <i className="hn hn-check text-[10px]"></i>
+                                {t('repository.import.existingBadge')}
+                              </span>
                             ) : null}
                           </div>
-                          <p className="mt-2 break-all text-xs text-base-content/55">
+                          <p className="mt-2 break-all font-mono text-xs text-base-content/40">
                             {candidate.manifestPath}
                           </p>
-                          <p className="mt-1 break-all text-xs text-base-content/55">
-                            {candidate.skillRoot || '/'}
-                          </p>
                           {candidate.description ? (
-                            <p className="mt-2 text-sm text-base-content/60">{candidate.description}</p>
+                            <p className="mt-2 text-sm text-base-content/60 line-clamp-2">{candidate.description}</p>
                           ) : null}
                         </div>
                       </label>
@@ -408,100 +443,130 @@ export function RepositoryImportModal({
                 </div>
               </article>
 
-              <article className="rounded-[24px] border border-base-300 bg-base-200/50 p-5">
-                <h4 className="text-lg font-semibold">{t('repository.import.previewTitle')}</h4>
+              {/* Preview Panel */}
+              <article className="flex flex-col rounded-lg border border-[var(--border-subtle)] bg-base-200/30">
+                <div className="border-b border-[var(--border-subtle)] bg-base-100/50 p-5">
+                  <h4 className="text-lg font-bold text-base-content">{t('repository.import.previewTitle')}</h4>
+                </div>
 
-                {selectedCandidate ? (
-                  <div className="mt-5 space-y-4 text-sm">
-                    <div className="rounded-[20px] border border-base-300 bg-base-100 p-4">
-                      <p className="font-medium">{selectedCandidate.name}</p>
-                      <div className="mt-3 space-y-2 text-base-content/65">
-                        <p>{t('repository.import.preview.selectedCount', { count: selectedCandidates.length })}</p>
-                        <p>{t('repository.import.preview.slug', { slug: selectedCandidate.slug })}</p>
-                        <p>
-                          {t('repository.import.preview.sourceType', {
-                            type: t(`repository.import.sourceKinds.${sourceKind}`),
-                          })}
-                        </p>
-                        <p className="break-all">
-                          {t('repository.import.preview.sourceUrl', {
-                            sourceUrl: normalizeDisplayPath(selectedCandidate.sourceUrl),
-                          })}
-                        </p>
-                        <p className="break-all">
-                          {t('repository.import.preview.canonicalPath', {
-                            path: selectedCandidate.slug,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    {activeResolvedImport.warnings.length > 0 ? (
-                      <div className="rounded-[20px] border border-warning/30 bg-warning/10 p-4 text-warning">
-                        {activeResolvedImport.warnings.join('；')}
-                      </div>
-                    ) : null}
-
-                    {batchResults.length > 0 ? (
-                      <div className="rounded-[20px] border border-base-300 bg-base-100 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <h5 className="font-semibold">{t('repository.import.result.title')}</h5>
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            <span>
-                              {t('repository.import.result.installedCount', {
-                                count: batchResults.filter((item) => item.status === 'installed').length,
-                              })}
-                            </span>
-                            <span>
-                              {t('repository.import.result.existingCount', {
-                                count: batchResults.filter((item) => item.status === 'existing').length,
-                              })}
-                            </span>
-                            <span>
-                              {t('repository.import.result.failedCount', {
-                                count: batchResults.filter((item) => item.status === 'failed').length,
-                              })}
-                            </span>
+                <div className="flex-1 p-5 overflow-y-auto custom-scrollbar max-h-[400px]">
+                  {selectedCandidate ? (
+                    <div className="space-y-4 text-sm">
+                      <div className="rounded-lg border border-[var(--border-subtle)] bg-base-100 p-5 shadow-inner">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary">
+                            <i className="hn hn-code-block text-xl"></i>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-base-content">{selectedCandidate.name}</p>
+                            <p className="text-xs text-base-content/50">{selectedCandidate.version || 'v1.0.0'}</p>
                           </div>
                         </div>
-                        <div className="mt-4 space-y-3">
-                          {batchResults.map((item) => (
-                            <article
-                              key={item.manifestPath}
-                              className="rounded-[16px] border border-base-300 bg-base-200/40 p-3"
-                            >
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium">{item.name}</p>
+                        
+                        <div className="space-y-3 rounded bg-[var(--bg-input)] p-4 font-mono text-xs text-base-content/60">
+                          <div className="flex justify-between">
+                            <span className="text-base-content/40">Source:</span>
+                            <span className="text-right text-base-content">{t(`repository.import.sourceKinds.${sourceKind}`)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-base-content/40">Slug:</span>
+                            <span className="text-right text-primary">{selectedCandidate.slug}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-base-content/40">Author:</span>
+                            <span className="text-right text-base-content">{selectedCandidate.author || 'Unknown'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">
+                           <p className="text-xs uppercase tracking-wider text-base-content/40 mb-2">Source URL</p>
+                           <p className="break-all font-mono text-xs text-primary/80">
+                            {normalizeDisplayPath(selectedCandidate.sourceUrl)}
+                           </p>
+                        </div>
+                      </div>
+
+                      {activeResolvedImport.warnings.length > 0 ? (
+                        <div className="rounded-lg border border-warning/30 bg-warning/10 p-4 text-warning shadow-[0_0_15px_rgba(255,165,0,0.1)]">
+                          <div className="flex items-start gap-2">
+                             <i className="hn hn-exclaimation mt-0.5"></i>
+                             <div>{activeResolvedImport.warnings.join('；')}</div>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {batchResults.length > 0 ? (
+                        <div className="rounded-lg border border-[var(--border-subtle)] bg-base-100 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <h5 className="font-bold text-base-content">{t('repository.import.result.title')}</h5>
+                            <div className="flex gap-2">
+                              <span className="badge badge-sm bg-success/10 text-success border-0 gap-1">
+                                {batchResults.filter((item) => item.status === 'installed').length} Installed
+                              </span>
+                              <span className="badge badge-sm bg-error/10 text-error border-0 gap-1">
+                                {batchResults.filter((item) => item.status === 'failed').length} Failed
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
+                            {batchResults.map((item) => (
+                              <article
+                                key={item.manifestPath}
+                                className={`flex items-center justify-between rounded border p-2 text-xs ${
+                                  item.status === 'installed' ? 'border-success/20 bg-success/5' :
+                                  item.status === 'failed' ? 'border-error/20 bg-error/5' :
+                                  'border-[var(--border-subtle)] bg-base-200'
+                                }`}
+                              >
+                                <span className="font-medium text-base-content/80 truncate max-w-[150px]">{item.name}</span>
                                 <span className={renderResultBadgeClass(item.status)}>
                                   {t(`repository.import.result.statuses.${item.status}`)}
                                 </span>
-                              </div>
-                              <p className="mt-1 text-xs text-base-content/60">{item.slug}</p>
-                              {item.message ? (
-                                <p className="mt-2 break-all text-xs text-base-content/70">{item.message}</p>
-                              ) : null}
-                            </article>
-                          ))}
+                              </article>
+                            ))}
+                          </div>
                         </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full min-h-[200px] rounded-lg border border-dashed border-[var(--border-subtle)] bg-base-100/50 p-5 text-center">
+                      <div className="mb-3 rounded-full bg-base-200 p-3 text-base-content/20">
+                        <i className="hn hn-cursor text-2xl"></i>
                       </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="mt-5 rounded-[20px] border border-dashed border-base-300 bg-base-100 p-5 text-sm text-base-content/60">
-                    {t('repository.import.noCandidateSelected')}
-                  </div>
-                )}
+                      <p className="text-sm text-base-content/40">
+                        {t('repository.import.noCandidateSelected')}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </article>
             </section>
           ) : null}
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-base-300 px-6 py-5 md:px-7">
-          <button className="btn btn-ghost" onClick={onClose}>
+        <div className="flex justify-end gap-3 border-t border-[var(--border-subtle)] bg-base-100/50 px-8 py-6 backdrop-blur-md md:px-8">
+          <button 
+            className="btn btn-ghost text-base-content/60 hover:bg-base-content/10 hover:text-base-content" 
+            onClick={onClose}
+          >
             {t('common.close')}
           </button>
-          <button className="btn btn-primary" disabled={!canImport} onClick={() => void handleImport()}>
-            {importing ? t('repository.import.importing') : t('repository.import.confirm')}
+          <button 
+            className="btn btn-primary h-10 min-h-[2.5rem] border-none bg-primary px-8 text-[var(--text-inverse)] shadow-[var(--shadow-neon-primary)] hover:shadow-[0_0_30px_rgba(var(--color-primary),0.6)] hover:bg-white disabled:bg-base-300 disabled:text-base-content/30 disabled:shadow-none" 
+            disabled={!canImport} 
+            onClick={() => void handleImport()}
+          >
+            {importing ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                {t('repository.import.importing')}
+              </>
+            ) : (
+              <>
+                <i className="hn hn-download-alt mr-2"></i>
+                {t('repository.import.confirm')}
+              </>
+            )}
           </button>
         </div>
       </div>
