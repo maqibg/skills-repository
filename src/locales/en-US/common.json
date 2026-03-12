@@ -149,6 +149,7 @@
       "safe": "Safe",
       "low": "Low risk",
       "medium": "Medium risk",
+      "overridden": "Risk overridden",
       "blocked": "Blocked",
       "unknown": "Unknown"
     },

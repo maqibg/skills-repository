@@ -149,6 +149,7 @@
       "safe": "安全",
       "low": "低リスク",
       "medium": "中リスク",
+      "overridden": "阻止を無視して導入",
       "blocked": "高リスクで阻止",
       "unknown": "不明"
     },

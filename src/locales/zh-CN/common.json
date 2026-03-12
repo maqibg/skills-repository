@@ -149,6 +149,7 @@
       "safe": "安全",
       "low": "低风险",
       "medium": "中风险",
+      "overridden": "已忽略阻断",
       "blocked": "高风险已阻断",
       "unknown": "未知"
     },

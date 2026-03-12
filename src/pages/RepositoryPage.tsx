@@ -37,7 +37,12 @@ const resolveSourceLabel = (
   return t('repository.sourceUnknown')
 }
 
-const resolveStatusKey = (securityLevel: string, blocked: boolean) => {
+const resolveStatusKey = (
+  securityLevel: string,
+  blocked: boolean,
+  riskOverrideApplied?: boolean,
+) => {
+  if (riskOverrideApplied) return 'overridden'
   if (blocked) return 'blocked'
   if (securityLevel === 'safe') return 'safe'
   if (securityLevel === 'low') return 'low'
@@ -229,16 +234,22 @@ export function RepositoryPage() {
                     </td>
                     <td className="text-center">
                       {(() => {
-                        const statusKey = resolveStatusKey(item.securityLevel, item.blocked)
+                        const statusKey = resolveStatusKey(
+                          item.securityLevel,
+                          item.blocked,
+                          item.riskOverrideApplied,
+                        )
                         return (
                           <span className={`inline-flex whitespace-nowrap badge badge-sm gap-1 border-0 font-bold ${
                             statusKey === 'blocked' ? 'bg-error/20 text-error' :
+                            statusKey === 'overridden' ? 'bg-warning/20 text-warning' :
                             statusKey === 'safe' ? 'bg-success/20 text-success' :
                             statusKey === 'low' ? 'bg-success/10 text-success/80' :
                             'bg-warning/20 text-warning'
                           }`}>
                             <i className={`hn ${
                               statusKey === 'blocked' ? 'hn-lock' :
+                              statusKey === 'overridden' ? 'hn-shield' :
                               statusKey === 'safe' ? 'hn-check-circle' :
                               'hn-exclaimation'
                             } text-xs`}></i>

@@ -48,6 +48,7 @@ export interface RepositorySkillSummary {
   installedAt: number
   securityLevel: string
   blocked: boolean
+  riskOverrideApplied?: boolean
 }
 
 export interface RepositorySkillDetail {
@@ -62,6 +63,7 @@ export interface RepositorySkillDetail {
   installedAt: number
   securityLevel: string
   blocked: boolean
+  riskOverrideApplied?: boolean
   skillMarkdown: string
 }
 

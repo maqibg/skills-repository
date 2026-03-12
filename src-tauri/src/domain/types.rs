@@ -115,6 +115,8 @@ pub struct RepositorySkillSummary {
     pub installed_at: i64,
     pub security_level: String,
     pub blocked: bool,
+    #[serde(default)]
+    pub risk_override_applied: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -131,6 +133,8 @@ pub struct RepositorySkillDetail {
     pub installed_at: i64,
     pub security_level: String,
     pub blocked: bool,
+    #[serde(default)]
+    pub risk_override_applied: bool,
     pub skill_markdown: String,
 }
 

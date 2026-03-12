@@ -191,11 +191,17 @@ pub fn rescan_security(state: State<'_, AppState>) -> Result<Vec<SecurityReport>
             persisted.skill_name = Some(skill.name.clone());
             persisted.source_path = Some(skill.canonical_path.clone());
             security_repository::save_security_report(&state.paths.db_file, &persisted)?;
+            let risk_override_applied = skill.risk_override_applied && persisted.blocked;
+            crate::repositories::skills::update_skill_risk_override_state(
+                &state.paths.db_file,
+                &skill.skill_id,
+                risk_override_applied,
+            )?;
             crate::repositories::skills::update_skill_security_status(
                 &state.paths.db_file,
                 &skill.skill_id,
                 &persisted.level,
-                persisted.blocked,
+                persisted.blocked && !risk_override_applied,
                 persisted.scanned_at,
             )?;
             reports.push(persisted);

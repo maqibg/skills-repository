@@ -59,6 +59,13 @@ fn repo_url_from_metadata(metadata_json: Option<String>) -> Option<String> {
         })
 }
 
+fn risk_override_from_metadata(metadata_json: Option<String>) -> bool {
+    metadata_json
+        .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
+        .and_then(|metadata| metadata.get("riskOverrideApplied").and_then(Value::as_bool))
+        .unwrap_or(false)
+}
+
 pub fn save_installed_skill(
     path: &Path,
     request: &InstallSkillRequest,
@@ -210,6 +217,7 @@ pub struct InstalledSkillSummary {
     pub source_url: Option<String>,
     pub repo_url: Option<String>,
     pub version: Option<String>,
+    pub risk_override_applied: bool,
 }
 
 pub struct RepositorySkillRemovalPlan {
@@ -268,6 +276,46 @@ pub fn update_skill_security_status(
     Ok(())
 }
 
+pub fn update_skill_risk_override_state(
+    path: &Path,
+    skill_id: &str,
+    risk_override_applied: bool,
+) -> Result<()> {
+    let conn = open_connection(path)?;
+    let metadata_json: Option<String> = conn.query_row(
+        "SELECT metadata_json FROM skills WHERE id = ?1",
+        params![skill_id],
+        |row| row.get(0),
+    )?;
+
+    let mut metadata = metadata_json
+        .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
+        .unwrap_or_else(|| json!({}));
+    if !metadata.is_object() {
+        metadata = json!({});
+    }
+
+    if let Some(object) = metadata.as_object_mut() {
+        object.insert(
+            "riskOverrideApplied".to_string(),
+            Value::Bool(risk_override_applied),
+        );
+    }
+
+    let now = OffsetDateTime::now_utc().unix_timestamp();
+    conn.execute(
+        "
+        UPDATE skills
+        SET metadata_json = ?2,
+            updated_at = ?3
+        WHERE id = ?1
+        ",
+        params![skill_id, metadata.to_string(), now],
+    )?;
+
+    Ok(())
+}
+
 pub fn list_installed_skills(path: &Path) -> Result<Vec<InstalledSkillSummary>> {
     let conn = open_connection(path)?;
     let mut stmt = conn.prepare(
@@ -286,8 +334,9 @@ pub fn list_installed_skills(path: &Path) -> Result<Vec<InstalledSkillSummary>> 
             name: row.get(1)?,
             canonical_path: row.get(2)?,
             source_url: row.get(3)?,
-            repo_url: repo_url_from_metadata(metadata_json),
+            repo_url: repo_url_from_metadata(metadata_json.clone()),
             version: row.get(4)?,
+            risk_override_applied: risk_override_from_metadata(metadata_json),
         })
     })?;
 
@@ -317,7 +366,8 @@ pub fn list_repository_skills(
             installed_at,
             security_level,
             blocked,
-            canonical_path
+            canonical_path,
+            metadata_json
         FROM skills
         WHERE canonical_path IS NOT NULL
         ORDER BY installed_at DESC, name ASC
@@ -336,6 +386,7 @@ pub fn list_repository_skills(
             row.get::<_, String>(7)?,
             row.get::<_, i64>(8)? != 0,
             row.get::<_, String>(9)?,
+            row.get::<_, Option<String>>(10)?,
         ))
     })?;
 
@@ -352,6 +403,7 @@ pub fn list_repository_skills(
             security_level,
             blocked,
             raw_path,
+            metadata_json,
         ) = row?;
         let skill_path = PathBuf::from(&raw_path);
         if !skill_path.exists() {
@@ -375,6 +427,7 @@ pub fn list_repository_skills(
             installed_at,
             security_level,
             blocked,
+            risk_override_applied: risk_override_from_metadata(metadata_json),
         });
     }
 
@@ -401,7 +454,8 @@ pub fn get_repository_skill_detail(
             source_url,
             installed_at,
             security_level,
-            blocked
+            blocked,
+            metadata_json
         FROM skills
         WHERE id = ?1 AND canonical_path IS NOT NULL
         ",
@@ -419,6 +473,7 @@ pub fn get_repository_skill_detail(
                 row.get::<_, i64>(8)?,
                 row.get::<_, String>(9)?,
                 row.get::<_, i64>(10)? != 0,
+                row.get::<_, Option<String>>(11)?,
             ))
         },
     )?;
@@ -435,6 +490,7 @@ pub fn get_repository_skill_detail(
         installed_at,
         security_level,
         blocked,
+        metadata_json,
     ) = row;
 
     let skill_dir = PathBuf::from(&canonical_path);
@@ -468,6 +524,7 @@ pub fn get_repository_skill_detail(
         installed_at,
         security_level,
         blocked,
+        risk_override_applied: risk_override_from_metadata(metadata_json),
         skill_markdown,
     })
 }
@@ -710,5 +767,21 @@ mod tests {
             skills[0].repo_url.as_deref(),
             Some("https://example.com/demo")
         );
+    }
+
+    #[test]
+    fn repository_skill_surfaces_risk_override_state_from_metadata() {
+        let dir = tempdir().unwrap();
+        let (db_path, skill_id) = seed_skill(dir.path(), "market", Some("github"));
+        update_skill_risk_override_state(&db_path, &skill_id, true).unwrap();
+        let canonical_store_dir = dir.path().join("app-data").join("skills");
+
+        let skills = list_repository_skills(&db_path, &canonical_store_dir).unwrap();
+        let detail = get_repository_skill_detail(&db_path, &canonical_store_dir, &skill_id).unwrap();
+        let installed = list_installed_skills(&db_path).unwrap();
+
+        assert!(skills[0].risk_override_applied);
+        assert!(detail.risk_override_applied);
+        assert!(installed[0].risk_override_applied);
     }
 }

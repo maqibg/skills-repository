@@ -285,6 +285,12 @@ pub fn install_skill_with_policy(
             &security_report.level,
             false,
         )?;
+        let risk_override_applied = allow_risk_override && security_report.blocked;
+        skills_repository::update_skill_risk_override_state(
+            &paths.db_file,
+            &skill_id,
+            risk_override_applied,
+        )?;
 
         let mut persisted_report = security_report.clone();
         persisted_report.id = Uuid::new_v4().to_string();
@@ -296,7 +302,7 @@ pub fn install_skill_with_policy(
             &paths.db_file,
             &skill_id,
             &persisted_report.level,
-            persisted_report.blocked,
+            persisted_report.blocked && !risk_override_applied,
             persisted_report.scanned_at,
         )?;
 
@@ -314,7 +320,7 @@ pub fn install_skill_with_policy(
             Some(json!({
                 "canonicalPath": canonical_path.to_string_lossy(),
                 "securityLevel": security_report.level,
-                "riskOverrideApplied": allow_risk_override && security_report.blocked,
+                "riskOverrideApplied": risk_override_applied,
             })),
         )?;
 
@@ -325,7 +331,7 @@ pub fn install_skill_with_policy(
             security_level: security_report.level.clone(),
             operation_log_id: Some(operation_log_id),
             security_report: Some(persisted_report),
-            risk_override_applied: allow_risk_override && security_report.blocked,
+            risk_override_applied,
         })
     })();
 
@@ -647,6 +653,18 @@ mod tests {
         assert!(PathBuf::from(&result.canonical_path)
             .join("install.sh")
             .exists());
+
+        let conn = open_connection(&paths.db_file).unwrap();
+        let (blocked, metadata_json): (i64, String) = conn
+            .query_row(
+                "SELECT blocked, metadata_json FROM skills WHERE id = ?1",
+                [&result.skill_id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+
+        assert_eq!(blocked, 0);
+        assert!(metadata_json.contains("\"riskOverrideApplied\":true"));
 
         let reports = security_repository::list_security_reports(&paths.db_file).unwrap();
         assert_eq!(reports.len(), 1);
