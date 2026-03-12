@@ -32,6 +32,9 @@ export const bootstrapApp = () => invoke<BootstrapPayload>('bootstrap_app')
 export const saveSettings = (settings: AppSettings) =>
   invoke<AppSettings>('save_settings', { settings })
 
+export const openSourceReference = (reference: string) =>
+  invoke<void>('open_source_reference', { reference })
+
 export const listRepositorySkills = () =>
   invoke<RepositorySkillSummary[]>('list_repository_skills')
 

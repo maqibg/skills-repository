@@ -1,10 +1,15 @@
 import { useTranslation } from 'react-i18next'
+import { openSourceReference } from '../lib/tauri-client'
 import { useMarketStore } from '../stores/use-market-store'
 
 const resolveInstallStateTone = (status: 'installed' | 'blocked' | 'failed') => {
   if (status === 'installed') return 'border-success/30 bg-success/5 text-success'
   if (status === 'blocked') return 'border-error/30 bg-error/5 text-error'
   return 'border-warning/30 bg-warning/5 text-warning'
+}
+
+const logSourceOpenFailure = (error: unknown) => {
+  console.error('Failed to open source reference:', error)
 }
 
 export function MarketPage() {
@@ -131,14 +136,13 @@ export function MarketPage() {
                         {item.description ?? t('market.noDescription')}
                       </p>
                     </div>
-                    <a
+                    <button
+                      type="button"
                       className="btn btn-sm btn-outline"
-                      href={item.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                      onClick={() => void openSourceReference(item.sourceUrl).catch(logSourceOpenFailure)}
                     >
                       {t('market.openSource')}
-                    </a>
+                    </button>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2 text-xs text-base-content/55">

@@ -7,4 +7,5 @@ pub mod project_distribution;
 pub mod repository;
 pub mod repository_import;
 pub mod settings;
+pub mod source_reference;
 pub mod templates;

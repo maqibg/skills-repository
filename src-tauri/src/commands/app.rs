@@ -1,4 +1,4 @@
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::{
     domain::{
@@ -18,7 +18,7 @@ use crate::{
     repositories::security as security_repository,
     services::{
         agent_scan, bootstrap, distribution, install, market, project_distribution,
-        repository, repository_import, settings, templates,
+        repository, repository_import, settings, source_reference, templates,
     },
 };
 
@@ -46,6 +46,17 @@ pub fn save_settings(
 ) -> Result<AppSettings, String> {
     log::info!("save_settings invoked");
     settings::save_settings(&state, &settings).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn open_source_reference(
+    app_handle: AppHandle,
+    _state: State<'_, AppState>,
+    reference: String,
+) -> Result<(), String> {
+    log::info!("open_source_reference invoked");
+    source_reference::open_source_reference(&app_handle, &reference)
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]

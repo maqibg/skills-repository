@@ -4,6 +4,7 @@ import { RepositoryDistributeModal } from '../components/RepositoryDistributeMod
 import { RepositoryImportModal } from '../components/RepositoryImportModal'
 import { normalizeDisplayPath } from '../lib/normalize-display-path'
 import { resolveSkillsTargets } from '../lib/skills-targets'
+import { openSourceReference } from '../lib/tauri-client'
 import { useRepositoryStore } from '../stores/use-repository-store'
 import { useSettingsStore } from '../stores/use-settings-store'
 import type {
@@ -48,6 +49,10 @@ const resolveDescription = (
   value: string | null | undefined,
   t: (key: string, options?: Record<string, unknown>) => string,
 ) => (value?.trim() ? value : t('repository.descriptionMissing'))
+
+const logSourceOpenFailure = (error: unknown) => {
+  console.error('Failed to open source reference:', error)
+}
 
 export function RepositoryPage() {
   const { t, i18n } = useTranslation()
@@ -305,15 +310,18 @@ export function RepositoryPage() {
                         {resolveSourceLabel(selectedDetail.sourceType, selectedDetail.sourceMarket, t)}
                       </span>
                       {selectedDetail.sourceUrl && (
-                        <a 
-                          href={selectedDetail.sourceUrl} 
-                          target="_blank" 
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void openSourceReference(selectedDetail.sourceUrl!).catch(
+                              logSourceOpenFailure,
+                            )
+                          }
                           className="flex items-center gap-1 text-xs text-primary hover:underline"
                         >
                           <i className="hn hn-external-link"></i>
-                          Source
-                        </a>
+                          {t('repository.source')}
+                        </button>
                       )}
                     </div>
                   </div>
