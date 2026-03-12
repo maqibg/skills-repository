@@ -212,9 +212,9 @@ export function RepositoryPage() {
                 {items.map((item) => (
                   <tr key={item.id} className="group transition-colors hover:bg-base-200/50">
                     <td className="py-4 pl-6 text-left">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
-                          <i className="hn hn-code-block"></i>
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
+                          <i className="hn hn-code-block text-base leading-none"></i>
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-base-content/90 transition-colors group-hover:text-primary">
