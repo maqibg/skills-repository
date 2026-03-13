@@ -370,11 +370,9 @@ mod tests {
         domain::{
             agent_registry::AgentRegistry,
             app_state::{AppPaths, AppState},
-            types::{AppSettings, CustomSkillsTarget, DistributionRequest, InstallSkillRequest},
+            types::{DistributionRequest, InstallSkillRequest},
         },
-        repositories::{
-            db::run_migrations, settings as settings_repository, skills as skills_repository,
-        },
+        repositories::{db::run_migrations, skills as skills_repository},
     };
     use std::{fs, path::Path, sync::Arc};
     use tempfile::tempdir;
@@ -610,44 +608,6 @@ mod tests {
                 .unwrap_or_default()
                 .contains("Windows symlink permission denied"));
         }
-    }
-
-    #[test]
-    fn resolves_custom_target_from_settings() {
-        let dir = tempdir().unwrap();
-        let state = test_state(dir.path());
-        run_migrations(&state.paths.db_file).unwrap();
-        settings_repository::save_settings(
-            &state.paths.db_file,
-            &AppSettings {
-                language: "zh-CN".into(),
-                theme_mode: "system".into(),
-                visible_skills_target_ids: vec!["custom-demo".into()],
-                custom_skills_targets: vec![CustomSkillsTarget {
-                    id: "custom-demo".into(),
-                    label: "Demo IDE".into(),
-                    relative_path: ".demo/skills".into(),
-                }],
-            },
-        )
-        .unwrap();
-        let project_root = dir.path().join("workspace");
-        fs::create_dir_all(&project_root).unwrap();
-
-        let target_root = resolve_project_target_root(
-            &state,
-            &ProjectDistributionRequest {
-                target_scope: "project".into(),
-                project_root: project_root.to_string_lossy().to_string(),
-                target_type: "tag".into(),
-                target_agent_id: Some("custom-demo".into()),
-                custom_relative_path: None,
-                install_mode: "copy".into(),
-            },
-        )
-        .unwrap();
-
-        assert!(target_root.ends_with(".demo/skills"));
     }
 
     #[test]

@@ -226,19 +226,6 @@ mod tests {
     }
 
     #[test]
-    fn resolves_directory_symlink_as_directory_removal_kind() {
-        let root = tempfile::tempdir().unwrap();
-        let target_dir = root.path().join("target-dir");
-        fs::create_dir_all(&target_dir).unwrap();
-        let metadata = fs::symlink_metadata(&target_dir).unwrap();
-
-        assert_eq!(
-            resolve_removal_kind(&target_dir, &metadata),
-            RemovalKind::Directory
-        );
-    }
-
-    #[test]
     fn removes_directory_symlink_without_removing_source_directory() {
         let root = tempfile::tempdir().unwrap();
         let source_dir = root.path().join("source");

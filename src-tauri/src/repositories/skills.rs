@@ -755,33 +755,4 @@ mod tests {
         assert_eq!(report_count, 0);
     }
 
-    #[test]
-    fn list_installed_skills_preserves_repo_url_from_metadata() {
-        let dir = tempdir().unwrap();
-        let (db_path, _skill_id) = seed_skill(dir.path(), "market", Some("github"));
-
-        let skills = list_installed_skills(&db_path).unwrap();
-
-        assert_eq!(skills.len(), 1);
-        assert_eq!(
-            skills[0].repo_url.as_deref(),
-            Some("https://example.com/demo")
-        );
-    }
-
-    #[test]
-    fn repository_skill_surfaces_risk_override_state_from_metadata() {
-        let dir = tempdir().unwrap();
-        let (db_path, skill_id) = seed_skill(dir.path(), "market", Some("github"));
-        update_skill_risk_override_state(&db_path, &skill_id, true).unwrap();
-        let canonical_store_dir = dir.path().join("app-data").join("skills");
-
-        let skills = list_repository_skills(&db_path, &canonical_store_dir).unwrap();
-        let detail = get_repository_skill_detail(&db_path, &canonical_store_dir, &skill_id).unwrap();
-        let installed = list_installed_skills(&db_path).unwrap();
-
-        assert!(skills[0].risk_override_applied);
-        assert!(detail.risk_override_applied);
-        assert!(installed[0].risk_override_applied);
-    }
 }

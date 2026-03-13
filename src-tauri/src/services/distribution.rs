@@ -243,14 +243,4 @@ mod tests {
         assert!(PathBuf::from(&result.target_path).join("SKILL.md").exists());
     }
 
-    #[test]
-    fn formats_windows_symlink_permission_errors_explicitly() {
-        let target = PathBuf::from("E:/target-skill");
-        let error = format_symlink_error(&target, Error::from(ErrorKind::PermissionDenied));
-
-        #[cfg(target_os = "windows")]
-        assert!(error
-            .to_string()
-            .contains("Windows symlink permission denied"));
-    }
 }

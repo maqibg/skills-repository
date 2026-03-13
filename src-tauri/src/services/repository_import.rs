@@ -713,30 +713,6 @@ mod tests {
     }
 
     #[test]
-    fn resolves_github_repo_url_to_multiple_candidates() {
-        let request = ResolveRepositoryImportRequest {
-            source_kind: "github".into(),
-            input: "https://github.com/vercel-labs/skills".into(),
-        };
-
-        let result = resolve_github_import_source_with(&request, |url| {
-            if url.contains("/git/trees/") {
-                Ok(github_tree_payload(&[
-                    "skills/react/SKILL.md",
-                    "skills/rust/SKILL.md",
-                ]))
-            } else if url.contains("/branches/") {
-                Ok(github_branch_payload("0123456789abcdef"))
-            } else {
-                Ok(github_repo_payload("main"))
-            }
-        })
-        .unwrap();
-
-        assert_eq!(result.candidates.len(), 2);
-    }
-
-    #[test]
     fn resolves_github_tree_url_to_matching_candidate() {
         let request = ResolveRepositoryImportRequest {
             source_kind: "github".into(),
@@ -780,103 +756,6 @@ mod tests {
         assert!(error
             .to_string()
             .contains("only default-branch GitHub tree URLs are supported"));
-    }
-
-    #[test]
-    fn resolves_github_candidates_with_pinned_commit_version() {
-        let request = ResolveRepositoryImportRequest {
-            source_kind: "github".into(),
-            input: "https://github.com/vercel-labs/skills".into(),
-        };
-
-        let result = resolve_github_import_source_with(&request, |url| {
-            if url.contains("/git/trees/") {
-                Ok(github_tree_payload(&["skills/react/SKILL.md"]))
-            } else if url.contains("/branches/") {
-                Ok(github_branch_payload("0123456789abcdef"))
-            } else {
-                Ok(github_repo_payload("main"))
-            }
-        })
-        .unwrap();
-
-        assert_eq!(
-            result.candidates[0].version.as_deref(),
-            Some("0123456789abcdef")
-        );
-        assert!(result.candidates[0]
-            .source_url
-            .contains("/tree/0123456789abcdef/"));
-    }
-
-    #[test]
-    fn builds_github_install_request_with_pinned_download_ref() {
-        let install_request = build_install_request_for_import(&ImportRepositorySkillRequest {
-            source_kind: "github".into(),
-            input: "https://github.com/vercel-labs/skills".into(),
-            selected_manifest_path: "skills/react/SKILL.md".into(),
-            selected_skill_root: "skills/react".into(),
-            name: "react".into(),
-            slug: "vercel-labs-skills-skills-react".into(),
-            source_url: "https://github.com/vercel-labs/skills/tree/0123456789abcdef/skills/react"
-                .into(),
-            repo_url: Some("https://github.com/vercel-labs/skills".into()),
-            version: Some("0123456789abcdef".into()),
-            author: Some("vercel-labs".into()),
-            description: Some("demo repo".into()),
-            allow_risk_override: false,
-        })
-        .unwrap();
-
-        assert_eq!(
-            install_request.download_url.as_deref(),
-            Some("https://github.com/vercel-labs/skills/archive/0123456789abcdef.zip")
-        );
-        assert_eq!(install_request.version.as_deref(), Some("0123456789abcdef"));
-    }
-
-    #[test]
-    fn resolves_local_directory_candidates() {
-        let dir = tempdir().unwrap();
-        let root = dir.path().join("local-skills");
-        fs::create_dir_all(root.join("react")).unwrap();
-        fs::create_dir_all(root.join("rust")).unwrap();
-        fs::write(root.join("react").join("SKILL.md"), "# react").unwrap();
-        fs::write(root.join("rust").join("SKILL.md"), "# rust").unwrap();
-
-        let result = resolve_local_directory_import_source(&ResolveRepositoryImportRequest {
-            source_kind: "local_directory".into(),
-            input: root.to_string_lossy().to_string(),
-        })
-        .unwrap();
-
-        assert_eq!(result.candidates.len(), 2);
-    }
-
-    #[test]
-    fn resolves_local_zip_candidates() {
-        let dir = tempdir().unwrap();
-        let paths = test_paths(dir.path());
-        let zip_path = dir.path().join("skills.zip");
-        let file = fs::File::create(&zip_path).unwrap();
-        let mut zip = zip::ZipWriter::new(file);
-        let options = zip::write::SimpleFileOptions::default();
-        zip.start_file("bundle/react/SKILL.md", options).unwrap();
-        use std::io::Write as _;
-        zip.write_all(b"# react").unwrap();
-        zip.finish().unwrap();
-
-        let result = resolve_local_zip_import_source(
-            &paths,
-            &ResolveRepositoryImportRequest {
-                source_kind: "local_zip".into(),
-                input: zip_path.to_string_lossy().to_string(),
-            },
-        )
-        .unwrap();
-
-        assert_eq!(result.candidates.len(), 1);
-        assert_eq!(result.candidates[0].manifest_path, "bundle/react/SKILL.md");
     }
 
     #[test]

@@ -362,6 +362,7 @@ mod tests {
         repositories::{
             db::{open_connection, run_migrations},
             security as security_repository,
+            skills as skills_repository,
         },
     };
     use tempfile::tempdir;
@@ -665,6 +666,21 @@ mod tests {
 
         assert_eq!(blocked, 0);
         assert!(metadata_json.contains("\"riskOverrideApplied\":true"));
+
+        let repository_skills =
+            skills_repository::list_repository_skills(&paths.db_file, &paths.canonical_store_dir)
+                .unwrap();
+        let detail = skills_repository::get_repository_skill_detail(
+            &paths.db_file,
+            &paths.canonical_store_dir,
+            &result.skill_id,
+        )
+        .unwrap();
+        let installed = skills_repository::list_installed_skills(&paths.db_file).unwrap();
+
+        assert!(repository_skills[0].risk_override_applied);
+        assert!(detail.risk_override_applied);
+        assert!(installed[0].risk_override_applied);
 
         let reports = security_repository::list_security_reports(&paths.db_file).unwrap();
         assert_eq!(reports.len(), 1);
