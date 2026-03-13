@@ -1,234 +1,127 @@
 # AGENTS.md
 
-## 项目概述
+## 项目概览
 
-| 项目   | 说明                                                       |
-| ---- | -------------------------------------------------------- |
-| 仓库名称 | `skills-repository`                                      |
-| 产品名称 | `skills管理器`                                              |
-| 产品定位 | 跨 Agent 的 skills 资产管理层 / 控制平面                            |
-| 当前阶段 | 第二阶段开发阶段：代码与文档并重，优先推进功能主链路闭环                             |
-| 目标用户 | 多 Agent 个人开发者，Windows 优先                                 |
-| 目标形态 | 桌面管理器，技术栈固定为 `React + TypeScript + Vite + Rust + Tauri`  |
-| UI 栈 | `Tailwind CSS + DaisyUI + HackerNoon Pixel Icon Library` |
-| 本地存储 | `文件系统 + SQLite`                                          |
-| 当前主线 | 市场搜索、技能安装、安全扫描与阻断、多 Agent 分发、模板管理与模板注入                   |
-| 协作原则 | 文档先行、代码闭环、验证后再宣称完成                                       |
+`skills-manager` 是一个基于 `Tauri v2 + React 19 + TypeScript + Vite` 的桌面应用，用于管理本地技能仓库、搜索并安装市场技能、执行安全扫描、维护模板，并将技能分发到不同 Agent 目录。
 
-## 当前仓库现状
+| 维度 | 说明 |
+| --- | --- |
+| 前端 | `React 19`、`TypeScript`、`React Router`、`Zustand`、`i18next`、`Tailwind CSS v4`、`daisyUI` |
+| 后端 | `Rust`、`Tauri v2`、`rusqlite`、`ureq`、`walkdir` |
+| 包管理 | 根目录使用 `pnpm@10.0.0`，Rust 依赖由 `cargo` 管理 |
+| 桌面壳 | `src-tauri/tauri.conf.json` 配置应用窗口、构建流程与打包目标 |
+| 主要能力 | 仓库技能管理、市场搜索/安装、导入、分发、安全扫描、模板注入、设置维护 |
 
-| 事实            | 说明                                                                         |
-| ------------- | -------------------------------------------------------------------------- |
-| 当前仓库已包含正式工程骨架 | 根目录已有 `src/`、`src-tauri/`、`package.json`、`vite.config.ts`、`pnpm-lock.yaml` |
-| 第一阶段已验收完成     | 已完成工程骨架、i18n/主题基础层、SQLite 初始化、AgentRegistry、基础扫描链路                         |
-| 文档仍然是决策真源     | 产品、技术、原型、竞品资料统一沉淀在 `tep-docs/`                                             |
-| 视觉参考不等于正式实现   | `tep-docs/桌面应用设计风格定位.tsx` 仅为视觉探索参考，不是正式业务真源                                |
-| 竞品资料不是项目事实    | `tep-docs/Compet-PRO/` 只能提供启发，不能替代项目结论                                     |
-| 第二阶段不是文档收集阶段  | 默认任务应以实现功能主链路为主，文档更新是配套动作而不是主产出                                            |
+## 目录速览
 
-## 响应与协作约定
+| 路径 | 作用 |
+| --- | --- |
+| `src/main.tsx` | 前端入口，挂载应用并初始化样式与 i18n |
+| `src/App.tsx` | 启动引导，拉取 bootstrap 数据并应用主题/语言 |
+| `src/app/router.tsx` | 顶层路由，当前使用 `createHashRouter` |
+| `src/pages/` | 页面级视图：仓库、技能、市场、安全、设置、模板 |
+| `src/components/` | 共享组件与弹窗，页面尽量保持薄层 |
+| `src/stores/` | Zustand 状态管理，异步保存/同步逻辑集中在 store |
+| `src/lib/` | 前端工具与 Tauri IPC 封装，尤其是 `src/lib/tauri-client.ts` |
+| `src/types/app.ts` | 前后端共享的数据契约入口，新增字段时优先同步这里 |
+| `src/locales/*/common.json` | 多语言文案，当前包含 `zh-CN`、`en-US`、`ja-JP` |
+| `src-tauri/src/commands/` | Tauri command 暴露层，面向前端 IPC |
+| `src-tauri/src/services/` | 业务逻辑层，放核心流程而不是 UI 适配代码 |
+| `src-tauri/src/repositories/` | SQLite 与持久化逻辑 |
+| `src-tauri/src/domain/` | 领域状态与类型 |
+| `docs/API.md` | Tauri command 总览，修改接口面时要同步更新 |
+| `tep-docs/` | 产品/设计/技术参考文档，不是运行时代码 |
 
-| 规则       | 要求                                                 |
-| -------- | -------------------------------------------------- |
-| 默认语言     | 默认使用中文                                             |
-| 输出形式     | 结论先行；计划、总结、规范类内容优先用表格，便于 agent 扫描                  |
-| 事实确认     | 不把猜测写成事实；涉及外部最新技术、官方能力、版本变更时优先查官方资料                |
-| 重要结论沉淀   | 会影响产品、设计、技术或实现边界的结论，必须回写对应真源文档，不能只停留在对话里           |
-| 优先修改已有文件 | 若已有承载位置，优先更新原文档或现有代码，不重复创建语义相同文件                   |
-| 不做假完成    | 不允许通过静态壳、假数据、mock success、silent fallback 来伪装功能已完成 |
+## 环境准备
 
-## Source of Truth
+| 项目 | 要求 |
+| --- | --- |
+| Node.js | 建议使用当前 LTS；本机已验证 `v22.22.1` 可运行 |
+| pnpm | 通过 `corepack` 调用，锁定版本为 `pnpm@10.0.0` |
+| Rust | `src-tauri/Cargo.toml` 声明 `rust-version = 1.77.2`，当前稳定版可编译通过 |
+| Tauri 先决条件 | 需要可用的 WebView2 与 MSVC 工具链；可通过 `corepack pnpm tauri info` 检查 |
 
-### 优先级顺序
+首次进入仓库时建议执行：
 
-| 优先级 | 文件/目录                             | 用途                        |
-| --- | --------------------------------- | ------------------------- |
-| 1   | `tep-docs/PRD.md`                 | 产品目标、范围边界、功能定义、用户场景、优先级   |
-| 2   | `tep-docs/TechDesign.md`          | 技术选型、模块边界、数据模型、接口、流程、测试口径 |
-| 3   | `tep-docs/PrototypeDesign.md`     | 页面结构、信息架构、组件层次、交互说明       |
-| 4   | `tep-docs/PrototypePromptPack.md` | 面向 AI 设计工具的原型生成提示词        |
-| 5   | `tep-docs/Compet-PRO/`            | 竞品调研与技术参考，不代表本项目已决策内容     |
-| 6   | `src/`、`src-tauri/`               | 真实实现代码；仅在不改变产品/技术结论时可直接修改 |
-| 7   | `tep-docs/桌面应用设计风格定位.tsx`         | 视觉探索参考，不是正式实现真源           |
+- `corepack enable`
+- `corepack pnpm install`
+- `corepack pnpm tauri info`
 
-### 任务对齐规则
+## 常用命令
 
-| 任务类型       | 先读什么                                                            | 默认落点                     |
-| ---------- | --------------------------------------------------------------- | ------------------------ |
-| 产品需求新增/变更  | `tep-docs/PRD.md`                                               | `tep-docs/PRD.md`        |
-| 技术方案新增/变更  | `tep-docs/TechDesign.md`                                        | `tep-docs/TechDesign.md` |
-| 页面结构/交互/原型 | `tep-docs/PrototypeDesign.md`、`tep-docs/PrototypePromptPack.md` | 对应原型文档                   |
-| 竞品问题       | `tep-docs/Compet-PRO/`                                          | 调研文档或引用说明                |
-| 第二阶段功能开发   | `tep-docs/PRD.md` + `tep-docs/TechDesign.md` + 相关实现代码           | `src/`、`src-tauri/`      |
-| 研发任务拆解     | `tep-docs/PRD.md` + `tep-docs/TechDesign.md`                    | `TASKS.md` 或专项计划文档       |
+以下命令均应从仓库根目录执行；其中 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm build`、`corepack pnpm tauri info`、`cargo test --manifest-path src-tauri/Cargo.toml` 已在当前仓库实际验证通过。`corepack pnpm tauri:dev` 与 `corepack pnpm tauri:build` 属于交互式或耗时命令，按需执行。
 
-### 冲突处理
+| 目的 | 命令 | 说明 |
+| --- | --- | --- |
+| 安装依赖 | `corepack pnpm install` | 安装前端依赖 |
+| 启动前端开发服务器 | `corepack pnpm dev` | 仅启动 Vite |
+| 启动桌面应用开发模式 | `corepack pnpm tauri:dev` | 会启动 Vite + Tauri 桌面壳，属于交互式命令 |
+| 前端静态检查 | `corepack pnpm lint` | 运行 ESLint |
+| TypeScript 类型检查 | `corepack pnpm typecheck` | 分别检查 `tsconfig.app.json` 与 `tsconfig.node.json` |
+| 前端生产构建 | `corepack pnpm build` | 执行 `tsc -b && vite build` |
+| 检查 Tauri 环境 | `corepack pnpm tauri info` | 检查 WebView2 / Rust / CLI 先决条件 |
+| 运行 Rust 测试 | `cargo test --manifest-path src-tauri/Cargo.toml` | 当前后端主要自动化测试入口 |
+| 构建桌面安装包 | `corepack pnpm tauri:build` | 生成桌面应用包，耗时较长 |
 
-| 场景          | 处理方式                                                         |
-| ----------- | ------------------------------------------------------------ |
-| 用户需求与现有文档冲突 | 先明确指出冲突，优先建议更新真源文档，再继续扩展或实现                                  |
-| 文档之间不一致     | 先修正 `tep-docs/PRD.md` / `tep-docs/TechDesign.md` 的冲突，再开展下游工作 |
-| 文档与代码不一致    | 优先确认哪一方是正确决策，再修正文档或代码，不能默许漂移                                 |
-| 文档缺口影响实现    | 不要静默补需求；先补文档，再编码                                             |
+## 开发工作流
 
-## 第二阶段重点
+| 场景 | 建议做法 |
+| --- | --- |
+| 改页面或交互 | 优先从 `src/pages/`、`src/components/`、`src/stores/` 入手，避免把业务逻辑塞进组件 |
+| 改 IPC 接口 | 同步更新 `src-tauri/src/commands/app.rs`、`src/lib/tauri-client.ts`、`src/types/app.ts`、`docs/API.md` |
+| 改业务流程 | 优先修改 `src-tauri/src/services/`，仓储层 `repositories/` 只负责持久化 |
+| 改数据库结构 | 修改 `src-tauri/src/repositories/db.rs` 的迁移逻辑，并补充/更新对应 Rust 测试 |
+| 新增页面 | 同步更新 `src/app/router.tsx`、导航壳 `src/components/layout/AppShell.tsx` 与多语言文案 |
+| 新增可见文案 | 同步维护 `src/locales/zh-CN/common.json`、`src/locales/en-US/common.json`、`src/locales/ja-JP/common.json` |
 
-| 优先级 | 主线         | 说明                                               |
-| --- | ---------- | ------------------------------------------------ |
-| P0  | 市场搜索       | 接入真实 market provider，返回统一搜索结果与状态                 |
-| P0  | 技能安装       | 下载、临时目录处理、落 canonical store、索引入库                 |
-| P0  | 安全扫描与阻断    | 高风险默认阻断，显式给出原因与日志                                |
-| P0  | 多 Agent 分发 | 全局 / 项目 / 自定义目标的 `native / symlink / copy` 分发    |
-| P1  | 模板管理       | 模板创建、编辑、删除、复用                                    |
-| P1  | 模板注入       | 指定项目目录，批量注入一组 skills，输出 installed/skipped/failed |
-| P1  | 体验修复       | i18n、主题、布局、设置等作为配套修复，不抢主链路优先级                    |
+## 代码约定
 
-## 工作流程
+### 前端
 
-| 阶段        | 要求                                                       |
-| --------- | -------------------------------------------------------- |
-| 1. 读取真源   | 先读相关 `tep-docs/PRD.md` / `tep-docs/TechDesign.md` / 原型文档 |
-| 2. 阅读实现   | 再看 `src/` / `src-tauri/` 现有实现，确认当前状态与缺口                  |
-| 3. 判断问题类型 | 区分是需求缺口、技术边界缺口、实现缺陷，还是文档与实现不一致                           |
-| 4. 回写真源   | 任何影响产品或技术结论的信息都应先写回文档                                    |
-| 5. 进入实现   | 在文档与实现认知一致后，进入代码修改                                       |
-| 6. 运行验证   | 运行对应验证命令，拿到新鲜证据后再宣称完成                                    |
+- 使用函数组件与 Hooks；共享状态优先进入 `Zustand store`，不要在多个页面重复维护同一份远程状态。
+- IPC 调用统一经由 `src/lib/tauri-client.ts`，不要在组件中直接散落 `invoke(...)`。
+- 类型定义优先收敛到 `src/types/app.ts`；前后端契约变更时先改类型再改实现。
+- 保持页面组件薄、弹窗组件专注、工具函数纯净；已有结构已经按页面 / 组件 / store / lib 分层。
+- 路由是 Hash 模式；除非明确需要，不要擅自切换为 Browser Router。
 
-## 开发规范
+### 后端
 
-### 通用工程规范
+- `commands` 负责边界适配，`services` 负责业务逻辑，`repositories` 负责 SQLite 读写；不要跨层混写。
+- 新增命令时优先沿用现有错误传播方式，返回明确错误，不要吞错。
+- 本项目对失败可见性要求较高：不要引入“静默降级”“假成功”“copy 代替 symlink 但不告知”等隐藏 fallback。
+- 与文件系统、分发、模板注入相关的逻辑已有“不静默回退”的测试约束，改动时请保留这一行为特征。
 
-| 规则     | 要求                                         |
-| ------ | ------------------------------------------ |
-| 文档先行   | 先对齐文档，再进入实现                                |
-| 显式决策   | 不要静默补需求、补流程、补边界                            |
-| 不做静默降级 | 不新增 silent fallback、mock success、隐式兜底来掩盖问题 |
-| 失败要可见  | 优先显式报错、异常、日志和失败测试，便于定位根因                   |
-| 保持简洁   | 遵循 SOLID、DRY、分层清晰、YAGNI                    |
-| 删除陈旧路径 | 当行为已经明确变化时，及时清理废弃逻辑和过期兼容代码，除非文档明确要求保留      |
-| 不做假链路  | 第二阶段功能必须优先接通真实后端与真实数据，不做只会展示的假闭环           |
+## 测试与验证
 
-### 架构边界
+| 类型 | 命令 | 何时必须运行 |
+| --- | --- | --- |
+| 前端 lint | `corepack pnpm lint` | 改动 `src/` 下 TS/TSX 文件后 |
+| 前端类型检查 | `corepack pnpm typecheck` | 改动 TypeScript 类型、store、页面、IPC 封装后 |
+| 前端构建 | `corepack pnpm build` | 改动打包、资源、入口、样式或发布前 |
+| Rust 单元/集成测试 | `cargo test --manifest-path src-tauri/Cargo.toml` | 改动 `src-tauri/` 任意 Rust 文件后 |
 
-| 层级              | 应负责                     | 不应负责                     |
-| --------------- | ----------------------- | ------------------------ |
-| React 页面层       | 布局、交互、状态呈现、表单校验、路由切换    | 不直接访问本地文件系统，不直接访问 SQLite |
-| Zustand 层       | UI 状态、筛选条件、任务面板、设置镜像    | 不承载复杂业务规则                |
-| Tauri command 层 | 参数解析、权限判断、任务创建、响应封装     | 不写具体业务细节                 |
-| Service 层       | 扫描、安装、分发、模板注入、安全扫描、更新治理 | 不写 SQL 拼接，不关心 UI 展示      |
-| Repository 层    | SQLite 事务、表读写、缓存管理、日志写入 | 不接触外部 API 和文件系统业务编排      |
-| Adapter 层       | 市场源归一化、Agent 路径能力矩阵     | 不操作数据库                   |
+当前仓库**没有独立的前端测试框架目录**；前端回归主要依赖 `lint + typecheck + build`，后端回归主要依赖 `cargo test`。
 
-### 前端规范
+## 构建产物与非源码目录
 
-| 规则         | 要求                                                    |
-| ---------- | ----------------------------------------------------- |
-| Tauri 调用入口 | 所有调用统一通过 `src/lib/tauri-client.ts` 封装                 |
-| 页面组件限制     | 不允许在页面组件中直接 `invoke()`                                |
-| 任务监听顺序     | 任务型命令必须先注册事件监听，再触发 command；非任务型启动链路不得被任务监听阻塞          |
-| i18n       | 用户可见文案统一走 i18n key，不写死字符串                             |
-| 语言范围       | 当前默认支持 `zh-CN`、`en-US`、`ja-JP`                        |
-| 主题         | 统一使用 DaisyUI token 与 `html[data-theme]`，禁止写死颜色值       |
-| 图标         | 使用 HackerNoon Pixel Icon Library 时默认继承 `currentColor` |
-| 假数据边界      | 未接通后端的模块必须明确标注“即将开发/未接通”，不能伪装真实结果                     |
-| 美化页面       | 美化页面时必须适配项目的明暗主题                                      |
+- 不要手工编辑 `dist/`、`src-tauri/target/`、`src-tauri/target-codex*/`、`target/`、`target-codex*/`。
+- `.agents/`、`skills-lock.json`、`tep-docs/` 在 `.gitignore` 中被视为生成物或参考资料；除非任务明确要求，否则不要把它们当作主实现入口。
+- `src-tauri/gen/` 为生成目录，通常不应手改。
 
-### Rust / Tauri 后端规范
+## 提交前检查
 
-| 规则              | 要求                                                            |
-| --------------- | ------------------------------------------------------------- |
-| command 公开面     | 仅暴露当前真正实现并可验证的 commands，不提前暴露假接口                              |
-| migration       | SQLite migration 必须在启动阶段显式执行                                  |
-| 路径处理            | 涉及文件系统操作必须 canonicalize，并限定在允许目录范围内                           |
-| 任务事件            | 扫描、安装、分发、模板注入、更新等长任务优先接入 `task:progress / completed / failed` |
-| market provider | 单个 provider 故障不能污染全部 provider 状态                              |
-| 安全模型            | 默认先扫描再落库；高风险阻断必须显式、可解释                                        |
+提交或宣称完成前，至少按改动范围运行对应命令：
 
-## 文档更新规则
+| 改动范围 | 最低检查集 |
+| --- | --- |
+| 仅前端 | `corepack pnpm lint` + `corepack pnpm typecheck` + `corepack pnpm build` |
+| 仅 Rust/Tauri | `cargo test --manifest-path src-tauri/Cargo.toml` |
+| 前后端接口联动 | 上述两组全部执行 |
 
-| 规则       | 要求                                                                                                                                |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 语言       | 默认使用中文                                                                                                                            |
-| 输出形式     | 长内容优先表格；结论先行；便于 agent 扫描                                                                                                          |
-| 文件命名     | 文件名直白、语义明确；根目录只放工程与协作入口文档，真源产品/技术/原型文档默认落在 `tep-docs/`                                                                            |
-| 优先编辑已有文件 | 若已有承载位置，优先更新原文件，不轻易创建重复语义文件                                                                                                       |
-| 现状描述     | 不能把“计划中”“建议中”“未来约束”写成“当前已实现”                                                                                                      |
-| 联动更新     | 更新 `tep-docs/PRD.md` 后，如影响技术方案或原型，必须同步检查 `tep-docs/TechDesign.md`、`tep-docs/PrototypeDesign.md`、`tep-docs/PrototypePromptPack.md` |
+如果修改了 Tauri command、共享类型、数据库 schema、模板/分发/安全扫描逻辑，默认视为“前后端接口联动”。
 
-## 测试要求
+## 额外提示
 
-### 文档任务验收
-
-| 类型     | 最低要求                                                                           |
-| ------ | ------------------------------------------------------------------------------ |
-| 需求文档修改 | 检查与 `tep-docs/PRD.md` 的目标、范围、非目标一致                                             |
-| 技术方案修改 | 检查与 `tep-docs/TechDesign.md` 的架构、接口、存储、测试口径一致                                  |
-| 原型文档修改 | 检查与 `tep-docs/PrototypeDesign.md`、`tep-docs/PrototypePromptPack.md` 的页面结构与交互一致 |
-| 结论回写   | 重要决策不得只存在于对话中，必须落文件                                                            |
-
-### 代码任务最小验证
-
-| 改动类型          | 最低验证要求                         |
-| ------------- | ------------------------------ |
-| 前端代码改动        | `corepack pnpm typecheck`      |
-| 构建相关改动        | `corepack pnpm build`          |
-| Rust 后端改动     | `cargo test`                   |
-| 启动链路 / 桌面交互改动 | `corepack pnpm tauri dev` 冒烟验证 |
-| 关键流程闭环改动      | 同时给出命令输出证据与手工验证结果              |
-
-### 必测场景
-
-| 类别   | 必测内容                                      |
-| ---- | ----------------------------------------- |
-| 启动   | 首次启动、升级后启动、数据库迁移失败                        |
-| 扫描   | 系统级扫描、项目级扫描、自定义根路径扫描、重复识别                 |
-| 安装   | 市场安装成功、市场安装阻断、高风险失败回滚                     |
-| 分发   | 全局 `symlink` 成功、Windows 权限失败、项目 `copy` 成功 |
-| 模板   | 模板注入成功、模板部分失败、模板项缺失                       |
-| 更新   | 有更新、无更新、更新后重新分发                           |
-| i18n | 中英日切换、重启保持、缺失 key fallback                |
-| 主题   | 跟随系统、手动切换、重启保持、暗色可读性                      |
-| 安全   | 高风险阻断、`medium` 风险提示、重新扫描                  |
-| 删除   | 删除分发、删除 canonical store、非法路径拒绝            |
-
-### 完成前检查
-
-| 规则        | 要求                         |
-| --------- | -------------------------- |
-| 不做无证据完成声明 | 没有实际检查结果，不要声称“已完成”“已通过”    |
-| 自动化检查     | 只要仓库已具备测试或校验脚本，就应实际运行并记录结果 |
-| 文档一致性     | 需求、技术、原型三层如果被影响，必须做联动核对    |
-
-## 注意事项
-
-| 类别         | 注意点                                                  |
-| ---------- | ---------------------------------------------------- |
-| 产品边界       | 第二阶段优先做功能主链路闭环，不要重新回到“大而泛的规划输出”模式                    |
-| 非目标        | 不要擅自扩展团队私有市场、组织权限、云同步、账号体系、复杂推荐                      |
-| Windows 特性 | `symlink` 权限与 junction 行为存在差异，必须显式提示失败原因             |
-| 市场适配       | provider 状态需隔离上报，不要让单一市场源故障污染全部搜索结果                  |
-| 图标许可       | Pixel Icon Library 当前公开使用受 `CC BY 4.0` 约束，产品内需保留署名策略 |
-| 国际化        | 日文与英文长度差异较大，布局和按钮宽度必须预留弹性                            |
-| 主题         | 自定义组件禁止写死颜色；亮/暗主题都要可读                                |
-| 真源一致性      | 重要新增结论必须回写文档，不能只在临时文件或聊天里保留                          |
-
-## 交付标准
-
-| 检查项  | 标准                                                    |
-| ---- | ----------------------------------------------------- |
-| 项目化  | 内容必须服务 `skills管理器`，不能写成泛化模板                           |
-| 一致性  | 不与 `tep-docs/PRD.md`、`tep-docs/TechDesign.md` 已确认结论冲突 |
-| 可执行  | 下一位 agent 能据此判断先读什么、先改什么、什么时候进入实现                     |
-| 现状真实 | 明确当前是代码 + 文档并重仓库，不伪造“已完成”能力                           |
-| 扩展友好 | 能覆盖未来产品、设计、技术、实现协作场景                                  |
-
-## 默认假设
-
-| 项目     | 默认值                                                                |
-| ------ | ------------------------------------------------------------------ |
-| 主要读者   | 通用 coding / product / design agents                                |
-| 当前工作主轴 | 第二阶段功能主链路开发                                                        |
-| 实现阶段真源 | 功能边界以 `tep-docs/PRD.md` 为准，架构/接口/数据模型以 `tep-docs/TechDesign.md` 为准 |
-| 推荐做法   | 高价值结论优先沉淀到 `tep-docs/` 真源文件                                        |
-| 输出目标   | 高密度、可扫描、可执行，而非 handbook 式冗长说明                                      |
-
+- `docs/API.md` 是当前 command 面的速查表；任何 IPC 面变更都应一起更新，避免文档与实现漂移。
+- `eslint.config.js` 已忽略 `dist/`、`src-tauri/target/**`、`src-tauri/target-codex*/**`、`tep-docs/**`；排查 lint 结果时注意范围。
+- `vite.config.ts` 已为 Tauri 开发模式配置端口、HMR 与 `src-tauri` 目录监听忽略规则，修改 dev server 行为时要兼顾桌面壳联调。
