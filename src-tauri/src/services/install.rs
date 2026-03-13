@@ -16,43 +16,11 @@ use crate::{
     },
     repositories::{security as security_repository, skills as skills_repository},
     security,
+    services::fs_utils::{copy_dir_all, ensure_clean_dir},
 };
-
-pub(crate) fn ensure_clean_dir(path: &Path) -> Result<()> {
-    if path.exists() {
-        if path.is_dir() {
-            fs::remove_dir_all(path)?;
-        } else {
-            fs::remove_file(path)?;
-        }
-    }
-    fs::create_dir_all(path)?;
-    Ok(())
-}
 
 pub(crate) fn sanitize_slug(slug: &str) -> String {
     slug.trim().replace('/', "-")
-}
-
-pub(crate) fn copy_dir_all(source: &Path, target: &Path) -> Result<()> {
-    fs::create_dir_all(target)?;
-
-    for entry in WalkDir::new(source) {
-        let entry = entry?;
-        let relative = entry.path().strip_prefix(source)?;
-        let destination = target.join(relative);
-
-        if entry.file_type().is_dir() {
-            fs::create_dir_all(&destination)?;
-        } else {
-            if let Some(parent) = destination.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            fs::copy(entry.path(), &destination)?;
-        }
-    }
-
-    Ok(())
 }
 
 pub(crate) fn extract_zip_bytes(bytes: &[u8], target_dir: &Path) -> Result<()> {

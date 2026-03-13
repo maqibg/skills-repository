@@ -11,7 +11,7 @@ use crate::{
         distributions as distributions_repository, settings as settings_repository,
         skills as skills_repository,
     },
-    services::distribution,
+    services::{distribution, fs_utils},
 };
 
 #[derive(Debug, Clone)]
@@ -271,7 +271,7 @@ pub(crate) fn distribute_repository_skills_to_project(
 
         let install_result: Result<()> = match request.install_mode.as_str() {
             "symlink" => distribution::create_directory_symlink(&source_path, &target_path),
-            "copy" => distribution::copy_dir_all(&source_path, &target_path),
+            "copy" => fs_utils::copy_dir_all(&source_path, &target_path),
             _ => unreachable!(),
         };
 

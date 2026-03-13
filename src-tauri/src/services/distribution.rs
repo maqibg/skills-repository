@@ -4,7 +4,6 @@ use std::{
     io::{Error, ErrorKind},
     path::{Path, PathBuf},
 };
-use walkdir::WalkDir;
 
 use crate::{
     domain::{
@@ -12,28 +11,8 @@ use crate::{
         types::{DistributionRequest, DistributionResult},
     },
     repositories::{distributions as distributions_repository, skills as skills_repository},
+    services::fs_utils::copy_dir_all,
 };
-
-pub(crate) fn copy_dir_all(source: &Path, target: &Path) -> Result<()> {
-    fs::create_dir_all(target)?;
-
-    for entry in WalkDir::new(source) {
-        let entry = entry?;
-        let relative = entry.path().strip_prefix(source)?;
-        let destination = target.join(relative);
-
-        if entry.file_type().is_dir() {
-            fs::create_dir_all(&destination)?;
-        } else {
-            if let Some(parent) = destination.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            fs::copy(entry.path(), &destination)?;
-        }
-    }
-
-    Ok(())
-}
 
 fn remove_existing_target(path: &Path) -> Result<()> {
     if !path.exists() {

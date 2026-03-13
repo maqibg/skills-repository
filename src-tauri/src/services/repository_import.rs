@@ -18,7 +18,10 @@ use crate::{
     },
     path_utils::display_path,
     repositories::skills as skills_repository,
-    services::install,
+    services::{
+        fs_utils::{ensure_clean_dir, remove_dir_if_present},
+        install,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -450,7 +453,7 @@ fn resolve_local_zip_import_source(
         .temp_dir
         .join(format!("repository-import-{}", Uuid::new_v4()));
     let extract_dir = scratch.join("extract");
-    install::ensure_clean_dir(&extract_dir)?;
+    ensure_clean_dir(&extract_dir)?;
     let bytes = fs::read(&zip_path)
         .with_context(|| format!("failed to read local zip {}", zip_path.display()))?;
     let result = (|| -> Result<ResolveRepositoryImportResult> {
@@ -473,9 +476,7 @@ fn resolve_local_zip_import_source(
         })
     })();
 
-    if scratch.exists() {
-        let _ = fs::remove_dir_all(&scratch);
-    }
+    let _ = remove_dir_if_present(&scratch);
 
     result
 }
@@ -900,7 +901,7 @@ mod tests {
         let paths = test_paths(dir.path());
         let zip_path = dir.path().join("polish.zip");
 
-        super::super::install::ensure_clean_dir(&paths.temp_dir).unwrap();
+        super::super::fs_utils::ensure_clean_dir(&paths.temp_dir).unwrap();
         let file = fs::File::create(&zip_path).unwrap();
         let mut zip = zip::ZipWriter::new(file);
         let options = zip::write::SimpleFileOptions::default();

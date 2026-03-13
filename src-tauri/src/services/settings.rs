@@ -18,7 +18,7 @@ use crate::{
         settings as settings_repo,
         skills as skills_repository,
     },
-    services::install::copy_dir_all,
+    services::fs_utils::{copy_dir_all, remove_dir_if_present},
 };
 
 pub fn load_or_create_settings(state: &AppState, language: String) -> Result<AppSettings> {
@@ -139,14 +139,6 @@ fn ensure_empty_target_directory(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn remove_directory_if_present(path: &Path) -> Result<()> {
-    if path.exists() {
-        fs::remove_dir_all(path)
-            .with_context(|| format!("failed to remove directory {}", path.display()))?;
-    }
-    Ok(())
-}
-
 fn validate_storage_target(current_path: &Path, target_path: &Path) -> Result<()> {
     if current_path == target_path {
         return Err(anyhow!("repository storage target must be different from current path"));
@@ -253,7 +245,7 @@ pub fn migrate_repository_storage(
     let copy_result = copy_dir_all(&previous_root, &target_root)
         .and_then(|_| verify_migrated_entries(&previous_root, &target_root, &entries));
     if let Err(error) = copy_result {
-        let _ = remove_directory_if_present(&target_root);
+        let _ = remove_dir_if_present(&target_root);
         return Err(error);
     }
 
@@ -281,12 +273,12 @@ pub fn migrate_repository_storage(
     ) {
         Ok(count) => count,
         Err(error) => {
-            let _ = remove_directory_if_present(&target_root);
+            let _ = remove_dir_if_present(&target_root);
             return Err(error);
         }
     };
 
-    if let Err(error) = remove_directory_if_present(&previous_root) {
+    if let Err(error) = remove_dir_if_present(&previous_root) {
         let rollback_error = rollback_migrated_storage(
             &state.paths.db_file,
             &previous_settings,
@@ -294,7 +286,7 @@ pub fn migrate_repository_storage(
             &previous_root,
             &target_root,
         );
-        let cleanup_error = remove_directory_if_present(&target_root).err();
+        let cleanup_error = remove_dir_if_present(&target_root).err();
         let mut message = format!("failed to remove previous repository storage: {}", error);
         if let Err(rollback_error) = rollback_error {
             message.push_str(&format!("; rollback failed: {}", rollback_error));
