@@ -5,6 +5,7 @@ import { RepositoryImportModal } from '../components/RepositoryImportModal'
 import { normalizeDisplayPath } from '../lib/normalize-display-path'
 import { resolveSkillsTargets } from '../lib/skills-targets'
 import { openSourceReference } from '../lib/tauri-client'
+import { useAppStore } from '../stores/use-app-store'
 import { useRepositoryStore } from '../stores/use-repository-store'
 import { useSettingsStore } from '../stores/use-settings-store'
 import type {
@@ -63,6 +64,7 @@ export function RepositoryPage() {
   const { t, i18n } = useTranslation()
   const [importOpen, setImportOpen] = useState(false)
   const settings = useSettingsStore((state) => state.settings)
+  const builtinSkillsTargets = useAppStore((state) => state.builtinSkillsTargets)
   const items = useRepositoryStore((state) => state.items)
   const loading = useRepositoryStore((state) => state.loading)
   const loaded = useRepositoryStore((state) => state.loaded)
@@ -101,7 +103,7 @@ export function RepositoryPage() {
     void refresh()
   }, [refresh])
 
-  const visibleTargets = resolveSkillsTargets(settings).filter((target) =>
+  const visibleTargets = resolveSkillsTargets(builtinSkillsTargets, settings).filter((target) =>
     settings.visibleSkillsTargetIds.includes(target.id),
   )
 

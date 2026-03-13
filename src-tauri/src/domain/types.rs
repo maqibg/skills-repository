@@ -1,4 +1,7 @@
-use super::agent_registry::AgentCapability;
+use super::agent_registry::{
+    default_visible_skill_target_ids as default_builtin_visible_skill_target_ids, AgentCapability,
+    BuiltinSkillsTarget,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -23,17 +26,7 @@ pub struct CustomSkillsTarget {
 }
 
 fn default_visible_skill_target_ids() -> Vec<String> {
-    vec![
-        "universal".into(),
-        "antigravity".into(),
-        "claude-code".into(),
-        "codebuddy".into(),
-        "kiro-cli".into(),
-        "openclaw".into(),
-        "qoder".into(),
-        "trae".into(),
-        "windsurf".into(),
-    ]
+    default_builtin_visible_skill_target_ids()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -52,6 +45,7 @@ pub struct BootstrapPayload {
     pub system: SystemInfo,
     pub settings: AppSettings,
     pub agents: Vec<AgentCapability>,
+    pub builtin_skills_targets: Vec<BuiltinSkillsTarget>,
     pub repository_storage: RepositoryStorageInfo,
 }
 

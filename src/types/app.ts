@@ -16,13 +16,11 @@ export interface CustomSkillsTarget {
   relativePath: string
 }
 
-export interface AgentCapability {
+export interface BuiltinSkillsTarget {
   id: string
   label: string
-  globalPaths: string[]
-  projectPaths: string[]
-  defaultGlobalMode: 'symlink' | 'copy' | 'native'
-  defaultProjectMode: 'symlink' | 'copy' | 'native'
+  labelKey?: string | null
+  relativePath: string
 }
 
 export interface SystemInfo {
@@ -36,7 +34,7 @@ export interface BootstrapPayload {
   appVersion: string
   system: SystemInfo
   settings: AppSettings
-  agents: AgentCapability[]
+  builtinSkillsTargets: BuiltinSkillsTarget[]
   repositoryStorage: RepositoryStorageInfo
 }
 

@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import i18n from '../lib/i18n'
 import {
-  DEFAULT_SETTINGS_SKILLS_TARGET_IDS,
   removeCustomSkillsTarget as removeCustomSkillsTargetFromList,
 } from '../lib/skills-targets'
 import { saveSettings as saveSettingsCommand } from '../lib/tauri-client'
@@ -25,7 +24,7 @@ interface SettingsStoreState {
 const defaultSettings: AppSettings = {
   language: 'en-US',
   themeMode: 'system',
-  visibleSkillsTargetIds: [...DEFAULT_SETTINGS_SKILLS_TARGET_IDS],
+  visibleSkillsTargetIds: [],
   customSkillsTargets: [],
   repositoryStoragePath: null,
 }

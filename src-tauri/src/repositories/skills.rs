@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use rusqlite::params;
+use rusqlite::{params, Connection};
 use serde_json::{json, Value};
 use std::{
     fs,
@@ -387,6 +387,51 @@ pub fn list_repository_storage_entries(
     }
 
     Ok(entries)
+}
+
+pub fn rewrite_repository_storage_paths_with_connection(
+    conn: &Connection,
+    previous_root: &Path,
+    current_root: &Path,
+) -> Result<usize> {
+    let previous_root = canonicalize_existing_path(previous_root)?;
+    let current_root = canonicalize_existing_path(current_root)?;
+    let now = OffsetDateTime::now_utc().unix_timestamp();
+    let mut stmt = conn.prepare(
+        "
+        SELECT id, canonical_path
+        FROM skills
+        WHERE canonical_path IS NOT NULL
+        ",
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+    })?;
+
+    let mut updates = Vec::new();
+    for row in rows {
+        let (skill_id, canonical_path) = row?;
+        let current_path = fs::canonicalize(PathBuf::from(&canonical_path))
+            .unwrap_or_else(|_| PathBuf::from(&canonical_path));
+        let relative = match current_path.strip_prefix(&previous_root) {
+            Ok(value) => value.to_path_buf(),
+            Err(_) => continue,
+        };
+        updates.push((
+            skill_id,
+            current_root.join(relative).to_string_lossy().to_string(),
+        ));
+    }
+    drop(stmt);
+
+    for (skill_id, next_path) in &updates {
+        conn.execute(
+            "UPDATE skills SET canonical_path = ?2, updated_at = ?3 WHERE id = ?1",
+            params![skill_id, next_path, now],
+        )?;
+    }
+
+    Ok(updates.len())
 }
 
 fn canonicalize_existing_path(path: &Path) -> Result<PathBuf> {
@@ -803,5 +848,4 @@ mod tests {
         assert_eq!(distribution_count, 0);
         assert_eq!(report_count, 0);
     }
-
 }

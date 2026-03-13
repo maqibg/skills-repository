@@ -4,6 +4,10 @@
     "subtitle": "跨 Agent 的 skills 资产控制台",
     "shellHint": "当前阶段已完成工程骨架、设置、扫描基础和任务总线。"
   },
+  "errors": {
+    "uiRenderTitle": "主界面渲染失败",
+    "uiRenderDescription": "这说明启动数据已经返回，但主界面渲染过程中出现异常。请把终端和页面错误信息发给我继续排查。"
+  },
   "nav": {
     "repository": "Skills 仓库",
     "skills": "我的 Skills",
@@ -211,6 +215,9 @@
   },
   "skills": {
     "title": "我的 Skills",
+    "targetLabels": {
+      "universal": "通用"
+    },
     "description": "按 AI IDE 标签查看真实全局 skills 目录。你可以启用更多内置标签，并添加自定义 IDE。",
     "loading": "正在扫描当前 AI IDE 的全局 skills 目录...",
     "empty": "该 AI IDE 的默认全局目录下未发现 skills。",

@@ -14,41 +14,6 @@ use crate::{
     services::distribution,
 };
 
-pub(crate) const BUILTIN_PROJECT_TARGETS: &[(&str, &str)] = &[
-    ("universal", ".agents/skills"),
-    ("antigravity", ".agent/skills"),
-    ("augment", ".augment/skills"),
-    ("claude-code", ".claude/skills"),
-    ("openclaw", "skills"),
-    ("codebuddy", ".codebuddy/skills"),
-    ("command-code", ".commandcode/skills"),
-    ("continue", ".continue/skills"),
-    ("cortex-code", ".cortex/skills"),
-    ("crush", ".crush/skills"),
-    ("droid", ".factory/skills"),
-    ("goose", ".goose/skills"),
-    ("junie", ".junie/skills"),
-    ("iflow-cli", ".iflow/skills"),
-    ("kilo-code", ".kilocode/skills"),
-    ("kiro-cli", ".kiro/skills"),
-    ("kode", ".kode/skills"),
-    ("mcpjam", ".mcpjam/skills"),
-    ("mistral-vibe", ".vibe/skills"),
-    ("mux", ".mux/skills"),
-    ("openhands", ".openhands/skills"),
-    ("pi", ".pi/skills"),
-    ("qoder", ".qoder/skills"),
-    ("qwen-code", ".qwen/skills"),
-    ("roo-code", ".roo/skills"),
-    ("trae", ".trae/skills"),
-    ("trae-cn", ".trae/skills"),
-    ("windsurf", ".windsurf/skills"),
-    ("zencoder", ".zencoder/skills"),
-    ("neovate", ".neovate/skills"),
-    ("pochi", ".pochi/skills"),
-    ("adal", ".adal/skills"),
-];
-
 #[derive(Debug, Clone)]
 pub(crate) struct ProjectDistributionSelection {
     pub skill_id: String,
@@ -90,11 +55,11 @@ fn validate_custom_relative_path(relative_path: &str) -> Result<String> {
 }
 
 fn resolve_tag_relative_path(state: &AppState, target_agent_id: &str) -> Result<String> {
-    if let Some((_, relative_path)) = BUILTIN_PROJECT_TARGETS
-        .iter()
-        .find(|(id, _)| *id == target_agent_id)
+    if let Some(target) = state
+        .agent_registry
+        .builtin_skills_target_by_id(target_agent_id)
     {
-        return Ok((*relative_path).to_string());
+        return Ok(target.relative_path.clone());
     }
 
     let settings = settings_repository::load_settings(&state.paths.db_file)?

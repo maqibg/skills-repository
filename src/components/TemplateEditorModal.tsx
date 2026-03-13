@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   RepositorySkillSummary,
@@ -18,11 +18,21 @@ interface TemplateEditorModalProps {
   onSave: () => Promise<void>
 }
 
+type TemplateEditorModalContentProps = Omit<TemplateEditorModalProps, 'open'>
+
 const selectedSkillIds = (items: SaveTemplateItemRequest[]) =>
   new Set(items.map((item) => item.skillRef))
 
 export function TemplateEditorModal({
   open,
+  ...props
+}: TemplateEditorModalProps) {
+  if (!open) return null
+
+  return <TemplateEditorModalContent key={props.draft.id ?? 'new-template'} {...props} />
+}
+
+function TemplateEditorModalContent({
   draft,
   tagsInput,
   repositorySkills,
@@ -31,15 +41,9 @@ export function TemplateEditorModal({
   onDraftChange,
   onTagsInputChange,
   onSave,
-}: TemplateEditorModalProps) {
+}: TemplateEditorModalContentProps) {
   const { t } = useTranslation()
   const [skillQuery, setSkillQuery] = useState('')
-
-  useEffect(() => {
-    if (!open) {
-      setSkillQuery('')
-    }
-  }, [open])
 
   const chosenSkillIds = useMemo(() => selectedSkillIds(draft.items), [draft.items])
   const repositorySkillMap = useMemo(
@@ -59,8 +63,6 @@ export function TemplateEditorModal({
       )
     })
   }, [chosenSkillIds, repositorySkills, skillQuery])
-
-  if (!open) return null
 
   const addSkill = (skill: RepositorySkillSummary) => {
     onDraftChange({

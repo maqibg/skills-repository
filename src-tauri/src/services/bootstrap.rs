@@ -45,12 +45,14 @@ pub fn bootstrap_payload(state: &AppState, version: String) -> Result<BootstrapP
     let system = build_system_info();
     let settings = load_or_create_settings(state, normalize_language(&system.locale))?;
     let agents: Vec<AgentCapability> = state.agent_registry.agents().to_vec();
+    let builtin_skills_targets = state.agent_registry.builtin_skills_targets().to_vec();
 
     Ok(BootstrapPayload {
         app_version: version,
         system,
         settings,
         agents,
+        builtin_skills_targets,
         repository_storage: repository_storage_info(state)?,
     })
 }

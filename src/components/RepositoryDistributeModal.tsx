@@ -1,9 +1,9 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectDistributionFields } from './ProjectDistributionFields'
 import { ProjectDistributionResultPanel } from './ProjectDistributionResultPanel'
-import type { SkillsTargetOption } from '../lib/skills-targets'
+import { resolveSkillsTargetLabel, type SkillsTargetOption } from '../lib/skills-targets'
 import type {
   BatchDistributeRepositorySkillsRequest,
   BatchDistributeResult,
@@ -21,8 +21,18 @@ interface RepositoryDistributeModalProps {
   onSubmit: (request: BatchDistributeRepositorySkillsRequest) => Promise<void>
 }
 
+type RepositoryDistributeModalContentProps = Omit<RepositoryDistributeModalProps, 'open'>
+
 export function RepositoryDistributeModal({
   open,
+  ...props
+}: RepositoryDistributeModalProps) {
+  if (!open) return null
+
+  return <RepositoryDistributeModalContent key="repository-distribute-modal" {...props} />
+}
+
+function RepositoryDistributeModalContent({
   repositorySkills,
   targets,
   distributing,
@@ -30,28 +40,16 @@ export function RepositoryDistributeModal({
   result,
   onClose,
   onSubmit,
-}: RepositoryDistributeModalProps) {
+}: RepositoryDistributeModalContentProps) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [targetScope, setTargetScope] = useState<'global' | 'project'>('project')
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([])
   const [projectRoot, setProjectRoot] = useState('')
   const [targetType, setTargetType] = useState<'tag' | 'custom'>('tag')
-  const [targetAgentId, setTargetAgentId] = useState('')
+  const [targetAgentId, setTargetAgentId] = useState(targets[0]?.id ?? '')
   const [customRelativePath, setCustomRelativePath] = useState('')
   const [installMode, setInstallMode] = useState<'symlink' | 'copy'>('symlink')
-
-  useEffect(() => {
-    if (!open) return
-    setQuery('')
-    setTargetScope('project')
-    setSelectedSkillIds([])
-    setProjectRoot('')
-    setTargetType('tag')
-    setTargetAgentId(targets[0]?.id ?? '')
-    setCustomRelativePath('')
-    setInstallMode('symlink')
-  }, [open, targets])
 
   const filteredSkills = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -82,8 +80,6 @@ export function RepositoryDistributeModal({
     const target = targets.find((item) => item.id === targetAgentId)
     return target ? `${rootPrefix}/${target.relativePath}` : ''
   }, [customRelativePath, projectRoot, targetAgentId, targetScope, targetType, targets])
-
-  if (!open) return null
 
   const canSubmit =
     !distributing &&
@@ -284,6 +280,7 @@ export function RepositoryDistributeModal({
             onInstallModeChange={setInstallMode}
             onChooseProjectDirectory={() => void chooseProjectDirectory()}
             renderModeLabel={(mode) => t(`repository.distribute.modes.${mode}`)}
+            renderTargetLabel={(target) => resolveSkillsTargetLabel(target, t)}
           />
 
           <section className="rounded-lg border border-[var(--border-subtle)] bg-base-200/20 p-6">

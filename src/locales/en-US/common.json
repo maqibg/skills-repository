@@ -4,6 +4,10 @@
     "subtitle": "Skill asset control center across agents",
     "shellHint": "The current build includes the app shell, repository browsing, global skill scanning, and the task bus."
   },
+  "errors": {
+    "uiRenderTitle": "Main UI render failed",
+    "uiRenderDescription": "Startup data has already returned, but rendering the main UI threw an error. Please share the terminal and page error details for further debugging."
+  },
   "nav": {
     "repository": "Skills Repository",
     "skills": "My Skills",
@@ -211,6 +215,9 @@
   },
   "skills": {
     "title": "My Skills",
+    "targetLabels": {
+      "universal": "Universal"
+    },
     "description": "Browse real global skills directories by AI IDE tag. You can enable more built-in tags and add custom IDE targets.",
     "loading": "Scanning the selected AI IDE global skills directory...",
     "empty": "No skills were found in this AI IDE's default global directory.",

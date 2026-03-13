@@ -30,6 +30,7 @@ interface ProjectDistributionFieldsProps {
   onInstallModeChange: (value: 'symlink' | 'copy') => void
   onChooseProjectDirectory: () => void
   renderModeLabel: (mode: 'symlink' | 'copy') => string
+  renderTargetLabel: (target: SkillsTargetOption) => string
 }
 
 export function ProjectDistributionFields({
@@ -61,6 +62,7 @@ export function ProjectDistributionFields({
   onInstallModeChange,
   onChooseProjectDirectory,
   renderModeLabel,
+  renderTargetLabel,
 }: ProjectDistributionFieldsProps) {
   return (
     <>
@@ -119,7 +121,7 @@ export function ProjectDistributionFields({
                 className={targetAgentId === target.id ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
                 onClick={() => onTargetAgentIdChange(target.id)}
               >
-                {target.label}
+                {renderTargetLabel(target)}
               </button>
             ))}
           </div>

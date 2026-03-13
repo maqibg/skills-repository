@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { TemplateEditorModal } from '../components/TemplateEditorModal'
 import { TemplateInjectModal } from '../components/TemplateInjectModal'
 import { resolveSkillsTargets } from '../lib/skills-targets'
+import { useAppStore } from '../stores/use-app-store'
 import { useSettingsStore } from '../stores/use-settings-store'
 import { useTemplatesStore } from '../stores/use-templates-store'
 import type { InjectTemplateRequest, SaveTemplateRequest, TemplateRecord } from '../types/app'
@@ -24,6 +25,7 @@ const parseTags = (value: string) =>
 export function TemplatesPage() {
   const { t } = useTranslation()
   const settings = useSettingsStore((state) => state.settings)
+  const builtinSkillsTargets = useAppStore((state) => state.builtinSkillsTargets)
   const templates = useTemplatesStore((state) => state.templates)
   const repositorySkills = useTemplatesStore((state) => state.repositorySkills)
   const loading = useTemplatesStore((state) => state.loading)
@@ -62,10 +64,10 @@ export function TemplatesPage() {
   )
   const visibleTargets = useMemo(
     () =>
-      resolveSkillsTargets(settings).filter((target) =>
+      resolveSkillsTargets(builtinSkillsTargets, settings).filter((target) =>
         settings.visibleSkillsTargetIds.includes(target.id),
       ),
-    [settings],
+    [builtinSkillsTargets, settings],
   )
   const syncRepositorySkills = () => {
     void refreshRepositorySkills().catch(() => undefined)

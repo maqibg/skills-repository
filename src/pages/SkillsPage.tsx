@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  BUILTIN_SKILLS_TARGETS,
   createCustomSkillsTargetId,
   hasSkillsTarget,
   normalizeRelativeSkillsPath,
   resolveSkillsTargets,
+  resolveSkillsTargetLabel,
 } from '../lib/skills-targets'
+import { useAppStore } from '../stores/use-app-store'
 import { useSettingsStore } from '../stores/use-settings-store'
 import { useSkillsStore } from '../stores/use-skills-store'
 
@@ -18,6 +19,7 @@ export function SkillsPage() {
   const addCustomSkillsTarget = useSettingsStore((state) => state.addCustomSkillsTarget)
   const removeCustomSkillsTarget = useSettingsStore((state) => state.removeCustomSkillsTarget)
   const settingsSaving = useSettingsStore((state) => state.saving)
+  const builtinSkillsTargets = useAppStore((state) => state.builtinSkillsTargets)
   const selectedAgentId = useSkillsStore((state) => state.selectedAgentId)
   const loading = useSkillsStore((state) => state.loading)
   const loaded = useSkillsStore((state) => state.loaded)
@@ -31,7 +33,10 @@ export function SkillsPage() {
   const [customLabel, setCustomLabel] = useState('')
   const [customRelativePath, setCustomRelativePath] = useState('')
 
-  const allTargets = useMemo(() => resolveSkillsTargets(settings), [settings])
+  const allTargets = useMemo(
+    () => resolveSkillsTargets(builtinSkillsTargets, settings),
+    [builtinSkillsTargets, settings],
+  )
   const visibleTargets = useMemo(
     () =>
       allTargets.filter((target) => settings.visibleSkillsTargetIds.includes(target.id)),
@@ -49,10 +54,10 @@ export function SkillsPage() {
 
     void scanAgentGlobalSkills({
       agentId: selectedTarget.id,
-      agentLabel: selectedTarget.label,
+      agentLabel: resolveSkillsTargetLabel(selectedTarget, t),
       relativePath: selectedTarget.relativePath,
     })
-  }, [scanAgentGlobalSkills, selectedAgentId, selectedTarget, setSelectedAgentId])
+  }, [scanAgentGlobalSkills, selectedAgentId, selectedTarget, setSelectedAgentId, t])
 
   const persistSettings = async () => {
     try {
@@ -88,7 +93,7 @@ export function SkillsPage() {
     }
 
     const id = createCustomSkillsTargetId(label)
-    if (hasSkillsTarget(settings, id)) {
+    if (hasSkillsTarget(builtinSkillsTargets, settings, id)) {
       setConfigError(t('skills.manager.validation.duplicateName'))
       return
     }
@@ -141,7 +146,7 @@ export function SkillsPage() {
                 }
                 onClick={() => setSelectedAgentId(target.id)}
               >
-                {target.label}
+                {resolveSkillsTargetLabel(target, t)}
               </button>
             ))}
           </div>
@@ -216,7 +221,7 @@ export function SkillsPage() {
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {BUILTIN_SKILLS_TARGETS.map((target) => (
+                  {builtinSkillsTargets.map((target) => (
                     <label
                       key={target.id}
                       className="flex items-start gap-3 rounded-box border border-base-300 bg-base-200/40 p-4"
@@ -229,7 +234,7 @@ export function SkillsPage() {
                         disabled={settingsSaving}
                       />
                       <div className="min-w-0">
-                        <p className="font-medium">{target.label}</p>
+                        <p className="font-medium">{resolveSkillsTargetLabel(target, t)}</p>
                         <p className="mt-1 break-all text-xs text-base-content/55">
                           {target.relativePath}
                         </p>

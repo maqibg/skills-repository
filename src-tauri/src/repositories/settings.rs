@@ -3,7 +3,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 use time::OffsetDateTime;
 
-use crate::domain::types::AppSettings;
+use crate::domain::{agent_registry::default_visible_skill_target_ids, types::AppSettings};
 
 use super::db::open_connection;
 
@@ -54,17 +54,7 @@ pub fn default_settings(language: String) -> AppSettings {
     AppSettings {
         language,
         theme_mode: "system".into(),
-        visible_skills_target_ids: vec![
-            "universal".into(),
-            "antigravity".into(),
-            "claude-code".into(),
-            "codebuddy".into(),
-            "kiro-cli".into(),
-            "openclaw".into(),
-            "qoder".into(),
-            "trae".into(),
-            "windsurf".into(),
-        ],
+        visible_skills_target_ids: default_visible_skill_target_ids(),
         custom_skills_targets: Vec::new(),
         repository_storage_path: None,
     }

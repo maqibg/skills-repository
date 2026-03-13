@@ -1,7 +1,7 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { SkillsTargetOption } from '../lib/skills-targets'
+import { resolveSkillsTargetLabel, type SkillsTargetOption } from '../lib/skills-targets'
 import { ProjectDistributionFields } from './ProjectDistributionFields'
 import { ProjectDistributionResultPanel } from './ProjectDistributionResultPanel'
 import type {
@@ -22,8 +22,26 @@ interface TemplateInjectModalProps {
   onSubmit: (request: InjectTemplateRequest) => Promise<void>
 }
 
+type TemplateInjectModalContentProps = Omit<TemplateInjectModalProps, 'open' | 'template'> & {
+  template: TemplateRecord
+}
+
 export function TemplateInjectModal({
   open,
+  ...props
+}: TemplateInjectModalProps) {
+  if (!open || !props.template) return null
+
+  return (
+    <TemplateInjectModalContent
+      key={`template-inject-${props.template.id}`}
+      {...props}
+      template={props.template}
+    />
+  )
+}
+
+function TemplateInjectModalContent({
   template,
   targets,
   injecting,
@@ -32,22 +50,13 @@ export function TemplateInjectModal({
   missingSkillCount,
   onClose,
   onSubmit,
-}: TemplateInjectModalProps) {
+}: TemplateInjectModalContentProps) {
   const { t } = useTranslation()
   const [projectRoot, setProjectRoot] = useState('')
   const [targetType, setTargetType] = useState<'tag' | 'custom'>('tag')
-  const [targetAgentId, setTargetAgentId] = useState<string>('')
+  const [targetAgentId, setTargetAgentId] = useState<string>(targets[0]?.id ?? '')
   const [customRelativePath, setCustomRelativePath] = useState('')
   const [installMode, setInstallMode] = useState<'symlink' | 'copy'>('symlink')
-
-  useEffect(() => {
-    if (!open) return
-    setProjectRoot('')
-    setTargetType('tag')
-    setTargetAgentId(targets[0]?.id ?? '')
-    setCustomRelativePath('')
-    setInstallMode('symlink')
-  }, [open, targets])
 
   const resolvedTargetPath = useMemo(() => {
     if (!projectRoot.trim()) return ''
@@ -61,8 +70,6 @@ export function TemplateInjectModal({
     const target = targets.find((item) => item.id === targetAgentId)
     return target ? `${projectRoot.replace(/[\\/]+$/, '')}/${target.relativePath}` : ''
   }, [customRelativePath, projectRoot, targetAgentId, targetType, targets])
-
-  if (!open || !template) return null
 
   const canSubmit =
     !injecting &&
@@ -131,6 +138,7 @@ export function TemplateInjectModal({
             onInstallModeChange={setInstallMode}
             onChooseProjectDirectory={() => void chooseProjectDirectory()}
             renderModeLabel={(mode) => t(`templates.inject.modes.${mode}`)}
+            renderTargetLabel={(target) => resolveSkillsTargetLabel(target, t)}
           />
 
           <ProjectDistributionResultPanel
