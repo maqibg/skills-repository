@@ -342,6 +342,8 @@ mod tests {
                 language: "zh-CN".into(),
                 theme_mode: "system".into(),
                 visible_skills_target_ids: vec!["custom-demo".into()],
+                visible_skills_targets_version:
+                    crate::domain::agent_registry::VISIBLE_SKILLS_TARGETS_VERSION,
                 custom_skills_targets: vec![CustomSkillsTarget {
                     id: "custom-demo".into(),
                     label: "Demo IDE".into(),

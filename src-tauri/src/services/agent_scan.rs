@@ -102,6 +102,16 @@ mod tests {
     use std::fs;
     use tempfile::tempdir;
 
+    #[cfg(target_os = "windows")]
+    fn create_test_symlink(source: &Path, target: &Path) -> std::io::Result<()> {
+        std::os::windows::fs::symlink_dir(source, target)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn create_test_symlink(source: &Path, target: &Path) -> std::io::Result<()> {
+        std::os::unix::fs::symlink(source, target)
+    }
+
     #[test]
     fn classifies_directory_link_and_broken_link() {
         let dir = tempdir().unwrap();
@@ -113,17 +123,23 @@ mod tests {
         fs::write(real_skill.join("SKILL.md"), "# real").unwrap();
 
         let linked_skill = skills_root.join("linked");
-        #[cfg(target_os = "windows")]
-        std::os::windows::fs::symlink_dir(&real_skill, &linked_skill).unwrap();
-        #[cfg(not(target_os = "windows"))]
-        std::os::unix::fs::symlink(&real_skill, &linked_skill).unwrap();
+        if let Err(error) = create_test_symlink(&real_skill, &linked_skill) {
+            #[cfg(target_os = "windows")]
+            if crate::services::distribution::is_windows_symlink_permission_error(&error) {
+                return;
+            }
+            panic!("failed to create linked symlink for test: {}", error);
+        }
 
         let broken_target = skills_root.join("missing");
         let broken_link = skills_root.join("broken");
-        #[cfg(target_os = "windows")]
-        std::os::windows::fs::symlink_dir(&broken_target, &broken_link).unwrap();
-        #[cfg(not(target_os = "windows"))]
-        std::os::unix::fs::symlink(&broken_target, &broken_link).unwrap();
+        if let Err(error) = create_test_symlink(&broken_target, &broken_link) {
+            #[cfg(target_os = "windows")]
+            if crate::services::distribution::is_windows_symlink_permission_error(&error) {
+                return;
+            }
+            panic!("failed to create broken symlink for test: {}", error);
+        }
 
         assert_eq!(relation_for_entry(&real_skill).unwrap(), "directory");
         assert_eq!(relation_for_entry(&linked_skill).unwrap(), "linked");

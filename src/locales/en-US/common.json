@@ -216,7 +216,8 @@
   "skills": {
     "title": "My Skills",
     "targetLabels": {
-      "universal": "Universal"
+      "universal": "Universal",
+      "codex": "Codex IDE"
     },
     "description": "Browse real global skills directories by AI IDE tag. You can enable more built-in tags and add custom IDE targets.",
     "loading": "Scanning the selected AI IDE global skills directory...",
@@ -230,7 +231,7 @@
     "manager": {
       "open": "Manage Tags",
       "title": "Manage AI IDE Tags",
-      "description": "The Universal tag maps to `~/.agents/skills`. Other built-in tags stay hidden until the user explicitly enables them.",
+      "description": "The Universal tag maps to `~/.agents/skills`, while the Codex IDE tag maps to `~/.codex/skills`. Other built-in tags stay hidden until the user explicitly enables them.",
       "supportedTitle": "Built-in Tags",
       "supportedDescription": "Checked tags appear at the top of \"My Skills\" and can be scanned in real time.",
       "customTitle": "Custom IDEs",

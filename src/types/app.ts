@@ -6,6 +6,7 @@ export interface AppSettings {
   language: AppLocale
   themeMode: ThemeMode
   visibleSkillsTargetIds: string[]
+  visibleSkillsTargetsVersion: number
   customSkillsTargets: CustomSkillsTarget[]
   repositoryStoragePath: string | null
 }

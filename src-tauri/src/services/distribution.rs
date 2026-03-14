@@ -50,8 +50,18 @@ pub(crate) fn create_directory_symlink(source: &Path, target: &Path) -> Result<(
     Ok(())
 }
 
+#[cfg(target_os = "windows")]
+pub(crate) fn is_windows_symlink_permission_error(error: &Error) -> bool {
+    error.kind() == ErrorKind::PermissionDenied || error.raw_os_error() == Some(1314)
+}
+
+#[cfg(not(target_os = "windows"))]
+pub(crate) fn is_windows_symlink_permission_error(_error: &Error) -> bool {
+    false
+}
+
 fn format_symlink_error(target: &Path, error: Error) -> anyhow::Error {
-    if error.kind() == ErrorKind::PermissionDenied {
+    if is_windows_symlink_permission_error(&error) {
         anyhow!(
             "Windows symlink permission denied for {}. Enable Developer Mode or run with elevated permission.",
             target.display()
