@@ -1,7 +1,7 @@
 use super::agent_registry::AgentRegistry;
 use anyhow::{Context, Result};
 use std::{path::PathBuf, sync::Arc};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 #[derive(Debug, Clone)]
 pub struct AppPaths {
@@ -11,15 +11,22 @@ pub struct AppPaths {
 }
 
 impl AppPaths {
-    pub fn from_app(app: &AppHandle) -> Result<Self> {
-        let app_data_dir = app
-            .path()
-            .app_data_dir()
-            .context("failed to resolve app data directory")?;
-        let db_dir = app_data_dir.join("db");
-        let cache_dir = app_data_dir.join("cache").join("market");
-        let temp_dir = app_data_dir.join("tmp").join("tasks");
-        let canonical_store_dir = app_data_dir.join("skills");
+    fn resolve_portable_data_root() -> Result<PathBuf> {
+        let exe_path =
+            std::env::current_exe().context("failed to resolve current executable path")?;
+        let exe_dir = exe_path
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("current executable path has no parent directory"))?;
+        Ok(exe_dir.join("data"))
+    }
+
+    pub fn from_app(_app: &AppHandle) -> Result<Self> {
+        let data_root =
+            Self::resolve_portable_data_root().context("failed to resolve portable data root")?;
+        let db_dir = data_root.join("db");
+        let cache_dir = data_root.join("cache").join("market");
+        let temp_dir = data_root.join("tmp").join("tasks");
+        let canonical_store_dir = data_root.join("skills");
         let db_file = db_dir.join("skills-manager.db");
 
         std::fs::create_dir_all(&db_dir)?;
