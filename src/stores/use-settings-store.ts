@@ -25,6 +25,7 @@ const defaultSettings: AppSettings = {
   language: 'en-US',
   themeMode: 'system',
   visibleSkillsTargetIds: [],
+  visibleSkillsTargetsVersion: 0,
   customSkillsTargets: [],
   repositoryStoragePath: null,
 }

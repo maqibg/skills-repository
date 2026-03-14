@@ -596,4 +596,26 @@ mod tests {
 
         assert!(target_root.ends_with(".claude/skills"));
     }
+
+    #[test]
+    fn resolves_codex_target_root_under_home_directory() {
+        let dir = tempdir().unwrap();
+        let state = test_state(dir.path());
+        run_migrations(&state.paths.db_file).unwrap();
+
+        let target_root = resolve_project_target_root(
+            &state,
+            &ProjectDistributionRequest {
+                target_scope: "global".into(),
+                project_root: String::new(),
+                target_type: "tag".into(),
+                target_agent_id: Some("codex".into()),
+                custom_relative_path: None,
+                install_mode: "copy".into(),
+            },
+        )
+        .unwrap();
+
+        assert!(target_root.ends_with(".codex/skills"));
+    }
 }

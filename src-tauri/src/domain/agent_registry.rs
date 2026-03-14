@@ -39,6 +39,7 @@ pub struct AgentRegistry {
 pub fn default_visible_skill_target_ids() -> Vec<String> {
     vec![
         "universal".into(),
+        "codex".into(),
         "antigravity".into(),
         "claude-code".into(),
         "codebuddy".into(),
@@ -50,6 +51,8 @@ pub fn default_visible_skill_target_ids() -> Vec<String> {
     ]
 }
 
+pub const VISIBLE_SKILLS_TARGETS_VERSION: u32 = 1;
+
 impl AgentRegistry {
     pub fn new() -> Self {
         let builtin_skills_targets = vec![
@@ -58,6 +61,12 @@ impl AgentRegistry {
                 label: "Universal".into(),
                 label_key: Some("skills.targetLabels.universal".into()),
                 relative_path: ".agents/skills".into(),
+            },
+            BuiltinSkillsTarget {
+                id: "codex".into(),
+                label: "Codex IDE".into(),
+                label_key: Some("skills.targetLabels.codex".into()),
+                relative_path: ".codex/skills".into(),
             },
             BuiltinSkillsTarget {
                 id: "antigravity".into(),
@@ -387,5 +396,23 @@ impl AgentRegistry {
             .filter(|claim| claim.agent_label == label)
             .max_by_key(|claim| claim.priority)
             .map(|claim| claim.path.as_str())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AgentRegistry;
+
+    #[test]
+    fn includes_codex_in_builtin_targets_and_visible_defaults() {
+        let registry = AgentRegistry::new();
+        let codex_target = registry
+            .builtin_skills_target_by_id("codex")
+            .expect("codex target should exist");
+
+        assert_eq!(codex_target.relative_path, ".codex/skills");
+        assert!(super::default_visible_skill_target_ids()
+            .iter()
+            .any(|target_id| target_id == "codex"));
     }
 }

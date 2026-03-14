@@ -126,8 +126,9 @@ mod tests {
             db::run_migrations, distributions as distributions_repository,
             skills as skills_repository,
         },
+        services::distribution::is_windows_symlink_permission_error,
     };
-    use std::{fs, io::ErrorKind};
+    use std::fs;
     use tempfile::tempdir;
 
     fn setup_skill_fixture() -> (
@@ -240,7 +241,7 @@ mod tests {
 
         if let Err(error) = create_result {
             #[cfg(target_os = "windows")]
-            if error.kind() == ErrorKind::PermissionDenied {
+            if is_windows_symlink_permission_error(&error) {
                 return;
             }
             panic!("failed to create symlink for test: {}", error);

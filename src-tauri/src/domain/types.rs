@@ -1,6 +1,6 @@
 use super::agent_registry::{
-    default_visible_skill_target_ids as default_builtin_visible_skill_target_ids, AgentCapability,
-    BuiltinSkillsTarget,
+    default_visible_skill_target_ids as default_builtin_visible_skill_target_ids,
+    AgentCapability, BuiltinSkillsTarget, VISIBLE_SKILLS_TARGETS_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +11,8 @@ pub struct AppSettings {
     pub theme_mode: String,
     #[serde(default = "default_visible_skill_target_ids")]
     pub visible_skills_target_ids: Vec<String>,
+    #[serde(default)]
+    pub visible_skills_targets_version: u32,
     #[serde(default)]
     pub custom_skills_targets: Vec<CustomSkillsTarget>,
     #[serde(default)]
@@ -27,6 +29,10 @@ pub struct CustomSkillsTarget {
 
 fn default_visible_skill_target_ids() -> Vec<String> {
     default_builtin_visible_skill_target_ids()
+}
+
+pub fn default_visible_skills_targets_version() -> u32 {
+    VISIBLE_SKILLS_TARGETS_VERSION
 }
 
 #[derive(Debug, Clone, Serialize)]

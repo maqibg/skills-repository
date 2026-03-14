@@ -6,6 +6,7 @@ use std::{
 
 use crate::{
     domain::{
+        agent_registry::VISIBLE_SKILLS_TARGETS_VERSION,
         app_state::{AppPaths, AppState},
         types::{
             AppSettings, MigrateRepositoryStorageRequest, MigrateRepositoryStorageResult,
@@ -21,9 +22,49 @@ use crate::{
     services::fs_utils::{copy_dir_all, remove_dir_if_present},
 };
 
+fn insert_visible_target_once(
+    visible_skills_target_ids: &mut Vec<String>,
+    target_id: &str,
+    after_target_id: Option<&str>,
+) {
+    if visible_skills_target_ids
+        .iter()
+        .any(|id| id == target_id)
+    {
+        return;
+    }
+
+    if let Some(after_target_id) = after_target_id {
+        if let Some(index) = visible_skills_target_ids
+            .iter()
+            .position(|id| id == after_target_id)
+        {
+            visible_skills_target_ids.insert(index + 1, target_id.to_string());
+            return;
+        }
+    }
+
+    visible_skills_target_ids.push(target_id.to_string());
+}
+
+fn normalize_settings(mut settings: AppSettings) -> AppSettings {
+    if settings.visible_skills_targets_version < VISIBLE_SKILLS_TARGETS_VERSION {
+        insert_visible_target_once(
+            &mut settings.visible_skills_target_ids,
+            "codex",
+            Some("universal"),
+        );
+        settings.visible_skills_targets_version = VISIBLE_SKILLS_TARGETS_VERSION;
+    }
+
+    settings
+}
+
 pub fn load_or_create_settings(state: &AppState, language: String) -> Result<AppSettings> {
     if let Some(settings) = settings_repo::load_settings(&state.paths.db_file)? {
-        return Ok(settings);
+        let normalized = normalize_settings(settings);
+        let persisted = settings_repo::save_settings(&state.paths.db_file, &normalized)?;
+        return Ok(persisted);
     }
 
     let settings = settings_repo::default_settings(language);
@@ -39,7 +80,8 @@ pub fn save_settings(state: &AppState, settings: &AppSettings) -> Result<AppSett
         ));
     }
 
-    settings_repo::save_settings(&state.paths.db_file, settings)
+    let normalized = normalize_settings(settings.clone());
+    settings_repo::save_settings(&state.paths.db_file, &normalized)
 }
 
 pub fn resolve_repository_storage_dir(state: &AppState) -> Result<PathBuf> {
@@ -390,6 +432,7 @@ mod tests {
         assert_eq!(parsed.language, "zh-CN");
         assert_eq!(parsed.theme_mode, "dark");
         assert_eq!(parsed.visible_skills_target_ids, vec!["universal"]);
+        assert_eq!(parsed.visible_skills_targets_version, 0);
         assert_eq!(
             parsed.custom_skills_targets,
             vec![CustomSkillsTarget {
@@ -462,5 +505,52 @@ mod tests {
         .unwrap_err();
 
         assert!(error.to_string().contains("cannot be inside current repository storage"));
+    }
+
+    #[test]
+    fn load_or_create_settings_migrates_legacy_visible_targets() {
+        let state = create_state();
+        let legacy = serde_json::json!({
+            "language": "zh-CN",
+            "themeMode": "dark",
+            "visibleSkillsTargetIds": ["universal", "qoder"],
+            "customSkillsTargets": [],
+            "repositoryStoragePath": null
+        });
+
+        let conn = open_connection(&state.paths.db_file).unwrap();
+        conn.execute(
+            "
+            INSERT INTO settings (key, value_json, updated_at)
+            VALUES (?1, ?2, 0)
+            ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at
+            ",
+            rusqlite::params![settings_repo::SETTINGS_KEY, legacy.to_string()],
+        )
+        .unwrap();
+
+        let loaded = load_or_create_settings(&state, "zh-CN".into()).unwrap();
+
+        assert_eq!(
+            loaded.visible_skills_target_ids,
+            vec![
+                "universal".to_string(),
+                "codex".to_string(),
+                "qoder".to_string()
+            ]
+        );
+        assert_eq!(
+            loaded.visible_skills_targets_version,
+            VISIBLE_SKILLS_TARGETS_VERSION
+        );
+
+        let persisted = settings_repo::load_settings(&state.paths.db_file)
+            .unwrap()
+            .unwrap();
+        assert_eq!(persisted.visible_skills_target_ids, loaded.visible_skills_target_ids);
+        assert_eq!(
+            persisted.visible_skills_targets_version,
+            VISIBLE_SKILLS_TARGETS_VERSION
+        );
     }
 }

@@ -8,6 +8,7 @@
 - IPC wrapper: `src/lib/tauri-client.ts`
 - Command registration: `src-tauri/src/lib.rs`
 - Command implementation: `src-tauri/src/commands/app.rs`
+- `bootstrap_app` / `save_settings` 的 `AppSettings` 负载包含 `visibleSkillsTargetsVersion`，用于一次性迁移新增的内置 skills 标签可见性。
 
 ## Command Surface
 
