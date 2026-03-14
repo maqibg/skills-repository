@@ -14,6 +14,7 @@ use crate::{
         app_state::AppPaths,
         types::{InstallSkillRequest, InstallSkillResult},
     },
+    http_client::HttpClient,
     repositories::{security as security_repository, skills as skills_repository},
     security,
     services::fs_utils::{copy_dir_all, ensure_clean_dir},
@@ -53,7 +54,7 @@ pub(crate) fn extract_zip_bytes(bytes: &[u8], target_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn stage_source(temp_dir: &Path, request: &InstallSkillRequest) -> Result<PathBuf> {
+fn stage_source(client: &HttpClient, temp_dir: &Path, request: &InstallSkillRequest) -> Result<PathBuf> {
     let staged_dir = temp_dir.join("staged");
     ensure_clean_dir(&staged_dir)?;
 
@@ -63,8 +64,8 @@ fn stage_source(temp_dir: &Path, request: &InstallSkillRequest) -> Result<PathBu
         .unwrap_or_else(|| request.source_url.clone());
 
     if source.starts_with("http://") || source.starts_with("https://") {
-        let response = ureq::get(&source)
-            .set("User-Agent", "skills-manager/0.1.0")
+        let response = client
+            .get(&source)
             .call()
             .map_err(|error| anyhow!("failed to download skill archive: {}", error))?;
         let mut bytes = Vec::new();
@@ -201,9 +202,10 @@ pub fn install_skill_with_policy(
 ) -> Result<InstallSkillResult> {
     let install_temp_dir = paths.temp_dir.join(format!("install-{}", Uuid::new_v4()));
     ensure_clean_dir(&install_temp_dir)?;
+    let client = HttpClient::for_db(&paths.db_file)?;
 
     let install_result = (|| -> Result<InstallSkillResult> {
-        let staged_dir = stage_source(&install_temp_dir, request)?;
+        let staged_dir = stage_source(&client, &install_temp_dir, request)?;
         let skill_root = resolve_requested_skill_root(&staged_dir, request)?;
         let security_report = security::scan_skill_directory_with_context(
             &skill_root,

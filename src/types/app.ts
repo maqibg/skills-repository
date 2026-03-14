@@ -2,12 +2,18 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 export type ResolvedTheme = 'skills-light' | 'skills-dark'
 export type AppLocale = 'zh-CN' | 'en-US' | 'ja-JP'
 
+export interface ProxySettings {
+  enabled: boolean
+  url: string
+}
+
 export interface AppSettings {
   language: AppLocale
   themeMode: ThemeMode
   visibleSkillsTargetIds: string[]
   customSkillsTargets: CustomSkillsTarget[]
   repositoryStoragePath: string | null
+  proxy: ProxySettings
 }
 
 export interface CustomSkillsTarget {

@@ -16,6 +16,7 @@ use crate::{
             ResolveRepositoryImportResult, ResolvedRepositoryImportCandidate,
         },
     },
+    http_client::HttpClient,
     path_utils::display_path,
     repositories::skills as skills_repository,
     services::{
@@ -118,9 +119,9 @@ fn parse_github_input(input: &str) -> Result<ParsedGithubInput> {
     ))
 }
 
-fn github_get_json(url: &str) -> Result<Value> {
-    let response = ureq::get(url)
-        .set("User-Agent", "skills-manager/0.1.0")
+fn github_get_json(client: &HttpClient, url: &str) -> Result<Value> {
+    let response = client
+        .get(url)
         .set("Accept", "application/vnd.github+json")
         .call()
         .map_err(|error| anyhow!("github request failed: {}", error))?;
@@ -594,7 +595,10 @@ pub fn resolve_repository_import_source(
     request: &ResolveRepositoryImportRequest,
 ) -> Result<ResolveRepositoryImportResult> {
     match request.source_kind.as_str() {
-        "github" => resolve_github_import_source_with(request, github_get_json),
+        "github" => {
+            let client = HttpClient::for_db(&paths.db_file)?;
+            resolve_github_import_source_with(request, |url| github_get_json(&client, url))
+        }
         "local_directory" => resolve_local_directory_import_source(request),
         "local_zip" => resolve_local_zip_import_source(paths, request),
         _ => Err(anyhow!("unsupported repository import source kind")),

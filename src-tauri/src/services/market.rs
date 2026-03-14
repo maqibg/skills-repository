@@ -4,6 +4,7 @@ use std::path::Path;
 use crate::{
     adapters::market::{GithubMarketProvider, MarketProviderAdapter, GITHUB_PROVIDER},
     domain::types::{MarketSearchRequest, MarketSearchResponse, ProviderStatus},
+    http_client::HttpClient,
     repositories::market as market_repository,
 };
 
@@ -20,6 +21,7 @@ fn search_with_providers(
     request: &MarketSearchRequest,
     providers: Vec<Box<dyn MarketProviderAdapter>>,
 ) -> Result<MarketSearchResponse> {
+    let client = HttpClient::for_db(db_path)?;
     let mut aggregated_results = Vec::new();
     let mut provider_statuses = Vec::new();
     let mut response_cache_hit = false;
@@ -43,7 +45,7 @@ fn search_with_providers(
             continue;
         }
 
-        match provider.search(request) {
+        match provider.search(&client, request) {
             Ok(response) => {
                 market_repository::save_cached_search(
                     db_path,
@@ -113,6 +115,7 @@ mod tests {
     use super::*;
     use crate::domain::types::MarketSkillSummary;
     use crate::repositories::db::run_migrations;
+    use crate::http_client::HttpClient;
     use tempfile::tempdir;
 
     #[derive(Default)]
@@ -123,7 +126,7 @@ mod tests {
             "success"
         }
 
-        fn search(&self, request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
+        fn search(&self, _client: &HttpClient, request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
             Ok(MarketSearchResponse {
                 results: vec![MarketSkillSummary {
                     id: "1".into(),
@@ -166,7 +169,7 @@ mod tests {
             "failure"
         }
 
-        fn search(&self, _request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
+        fn search(&self, _client: &HttpClient, _request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
             anyhow::bail!("provider unavailable")
         }
     }
@@ -186,7 +189,8 @@ mod tests {
         let db_path = dir.path().join("market.db");
         run_migrations(&db_path).unwrap();
 
-        let response = SuccessProvider.search(&request()).unwrap();
+        let client = HttpClient::for_db(&db_path).unwrap();
+        let response = SuccessProvider.search(&client, &request()).unwrap();
         market_repository::save_cached_search(&db_path, "success", "python", 1, 10, &response)
             .unwrap();
 

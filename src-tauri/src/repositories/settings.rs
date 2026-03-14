@@ -3,7 +3,10 @@ use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 use time::OffsetDateTime;
 
-use crate::domain::{agent_registry::default_visible_skill_target_ids, types::AppSettings};
+use crate::domain::{
+    agent_registry::default_visible_skill_target_ids,
+    types::{AppSettings, ProxySettings, DEFAULT_PROXY_URL},
+};
 
 use super::db::open_connection;
 
@@ -57,6 +60,10 @@ pub fn default_settings(language: String) -> AppSettings {
         visible_skills_target_ids: default_visible_skill_target_ids(),
         custom_skills_targets: Vec::new(),
         repository_storage_path: None,
+        proxy: ProxySettings {
+            enabled: false,
+            url: DEFAULT_PROXY_URL.to_string(),
+        },
     }
 }
 
@@ -82,6 +89,10 @@ mod tests {
                 relative_path: ".demo/skills".into(),
             }],
             repository_storage_path: Some("D:/skills-repository".into()),
+            proxy: ProxySettings {
+                enabled: true,
+                url: "http://127.0.0.1:7890".into(),
+            },
         };
 
         save_settings(&db_path, &settings).unwrap();
@@ -95,5 +106,7 @@ mod tests {
             loaded.repository_storage_path.as_deref(),
             Some("D:/skills-repository")
         );
+        assert!(loaded.proxy.enabled);
+        assert_eq!(loaded.proxy.url, "http://127.0.0.1:7890");
     }
 }

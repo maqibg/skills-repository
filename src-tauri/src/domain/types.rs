@@ -4,6 +4,28 @@ use super::agent_registry::{
 };
 use serde::{Deserialize, Serialize};
 
+pub(crate) const DEFAULT_PROXY_URL: &str = "127.0.0.1:7890";
+
+fn default_proxy_url() -> String {
+    DEFAULT_PROXY_URL.to_string()
+}
+
+fn default_proxy_settings() -> ProxySettings {
+    ProxySettings {
+        enabled: false,
+        url: default_proxy_url(),
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxySettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_proxy_url")]
+    pub url: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
@@ -15,6 +37,8 @@ pub struct AppSettings {
     pub custom_skills_targets: Vec<CustomSkillsTarget>,
     #[serde(default)]
     pub repository_storage_path: Option<String>,
+    #[serde(default = "default_proxy_settings")]
+    pub proxy: ProxySettings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

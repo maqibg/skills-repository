@@ -46,6 +46,16 @@
       "light": "Always use the light theme.",
       "dark": "Always use the dark theme."
     },
+    "proxy": {
+      "title": "Network Proxy",
+      "description": "Used for market search, GitHub import, and online downloads. When disabled, requests connect directly.",
+      "enabledLabel": "Enable proxy",
+      "enabledHint": "Disabled by default; enable only when you need a proxy.",
+      "urlLabel": "Proxy address",
+      "urlPlaceholder": "127.0.0.1:7890",
+      "urlHint": "Supports http(s):// or socks5://. If no scheme is provided, http:// is assumed.",
+      "saveAction": "Save proxy settings"
+    },
     "repository": {
       "title": "Repository Storage",
       "description": "The unified repository is stored in the app data directory by default. You can migrate it to another drive, and the app will rewrite managed canonical paths after verification.",

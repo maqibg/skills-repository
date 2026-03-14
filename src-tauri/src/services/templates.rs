@@ -348,6 +348,10 @@ mod tests {
                     relative_path: ".demo/skills".into(),
                 }],
                 repository_storage_path: None,
+                proxy: crate::domain::types::ProxySettings {
+                    enabled: false,
+                    url: crate::domain::types::DEFAULT_PROXY_URL.to_string(),
+                },
             },
         )
         .unwrap();

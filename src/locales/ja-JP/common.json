@@ -46,6 +46,16 @@
       "light": "常にライトテーマを使います。",
       "dark": "常にダークテーマを使います。"
     },
+    "proxy": {
+      "title": "ネットワークプロキシ",
+      "description": "マーケット検索、GitHub 導入、オンラインダウンロードなどの通信に使用します。無効時は直接接続します。",
+      "enabledLabel": "プロキシを有効化",
+      "enabledHint": "既定では無効です。必要な場合のみ有効にしてください。",
+      "urlLabel": "プロキシアドレス",
+      "urlPlaceholder": "127.0.0.1:7890",
+      "urlHint": "http(s):// または socks5:// に対応。スキーム未指定の場合は http:// として扱います。",
+      "saveAction": "プロキシ設定を保存"
+    },
     "repository": {
       "title": "リポジトリ保存先",
       "description": "統一リポジトリは既定ではアプリデータ配下に保存されます。別ドライブへ移行すると、検証後に managed canonical path も更新されます。",

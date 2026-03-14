@@ -46,6 +46,16 @@
       "light": "始终使用亮色主题。",
       "dark": "始终使用暗色主题。"
     },
+    "proxy": {
+      "title": "网络代理",
+      "description": "用于市场搜索、GitHub 导入、在线下载等网络请求。关闭时将直接连接网络。",
+      "enabledLabel": "启用代理",
+      "enabledHint": "默认关闭；仅在需要代理网络时开启。",
+      "urlLabel": "代理地址",
+      "urlPlaceholder": "127.0.0.1:7890",
+      "urlHint": "支持 http(s):// 或 socks5://；未填写协议时默认按 http:// 处理。",
+      "saveAction": "保存代理设置"
+    },
     "repository": {
       "title": "仓库存储位置",
       "description": "统一仓库默认保存在应用数据目录。你可以迁移到其他磁盘目录，迁移会同步更新受管 skills 的 canonical path。",

@@ -15,6 +15,8 @@ interface SettingsStoreState {
   setLanguage: (language: AppLocale) => void
   setThemeMode: (themeMode: ThemeMode) => void
   setRepositoryStoragePath: (repositoryStoragePath: string | null) => void
+  setProxyEnabled: (enabled: boolean) => void
+  setProxyUrl: (url: string) => void
   toggleVisibleSkillsTarget: (targetId: string) => void
   addCustomSkillsTarget: (target: CustomSkillsTarget) => void
   removeCustomSkillsTarget: (targetId: string) => void
@@ -27,6 +29,10 @@ const defaultSettings: AppSettings = {
   visibleSkillsTargetIds: [],
   customSkillsTargets: [],
   repositoryStoragePath: null,
+  proxy: {
+    enabled: false,
+    url: '127.0.0.1:7890',
+  },
 }
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
@@ -44,6 +50,14 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   setRepositoryStoragePath: (repositoryStoragePath) =>
     set((state) => ({
       settings: { ...state.settings, repositoryStoragePath },
+    })),
+  setProxyEnabled: (enabled) =>
+    set((state) => ({
+      settings: { ...state.settings, proxy: { ...state.settings.proxy, enabled } },
+    })),
+  setProxyUrl: (url) =>
+    set((state) => ({
+      settings: { ...state.settings, proxy: { ...state.settings.proxy, url } },
     })),
   toggleVisibleSkillsTarget: (targetId) =>
     set((state) => {

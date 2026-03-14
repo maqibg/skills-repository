@@ -1,6 +1,7 @@
 mod adapters;
 mod commands;
 mod domain;
+mod http_client;
 mod path_utils;
 mod repositories;
 mod security;

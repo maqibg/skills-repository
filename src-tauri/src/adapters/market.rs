@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use serde_json::Value;
 
+use crate::http_client::HttpClient;
+
 use crate::domain::types::{
     MarketSearchRequest, MarketSearchResponse, MarketSkillSummary, ProviderStatus,
 };
@@ -16,7 +18,8 @@ pub(crate) const SKILL_DIRECTORY_PREFIXES: &[&str] = &[
 
 pub trait MarketProviderAdapter: Send + Sync {
     fn provider_id(&self) -> &'static str;
-    fn search(&self, request: &MarketSearchRequest) -> Result<MarketSearchResponse>;
+    fn search(&self, client: &HttpClient, request: &MarketSearchRequest)
+        -> Result<MarketSearchResponse>;
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,9 +53,9 @@ impl GithubMarketProvider {
         )
     }
 
-    fn github_get_json(url: &str) -> Result<Value> {
-        let response = ureq::get(url)
-            .set("User-Agent", "skills-manager/0.1.0")
+    fn github_get_json(client: &HttpClient, url: &str) -> Result<Value> {
+        let response = client
+            .get(url)
             .set("Accept", "application/vnd.github+json")
             .call()
             .map_err(|error| anyhow!("github provider request failed: {}", error))?;
@@ -212,8 +215,8 @@ impl GithubMarketProvider {
         }
     }
 
-    fn resolve_branch_head_sha(repo: &GithubRepoCandidate) -> Result<String> {
-        let payload = Self::github_get_json(&Self::build_branch_url(repo))?;
+    fn resolve_branch_head_sha(client: &HttpClient, repo: &GithubRepoCandidate) -> Result<String> {
+        let payload = Self::github_get_json(client, &Self::build_branch_url(repo))?;
         payload
             .get("commit")
             .and_then(|commit| commit.get("sha"))
@@ -261,8 +264,8 @@ impl MarketProviderAdapter for GithubMarketProvider {
         GITHUB_PROVIDER
     }
 
-    fn search(&self, request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
-        let payload = Self::github_get_json(&self.build_search_url(request))?;
+    fn search(&self, client: &HttpClient, request: &MarketSearchRequest) -> Result<MarketSearchResponse> {
+        let payload = Self::github_get_json(client, &self.build_search_url(request))?;
         let repos = payload
             .get("items")
             .and_then(Value::as_array)
@@ -278,8 +281,8 @@ impl MarketProviderAdapter for GithubMarketProvider {
         let mut resolution_failures = 0_u32;
 
         for repo in &repos {
-            match Self::github_get_json(&Self::build_tree_url(repo)) {
-                Ok(tree_payload) => match Self::resolve_branch_head_sha(repo) {
+            match Self::github_get_json(client, &Self::build_tree_url(repo)) {
+                Ok(tree_payload) => match Self::resolve_branch_head_sha(client, repo) {
                     Ok(resolved_ref) => {
                         results.extend(Self::resolve_repo_skills(
                             repo,

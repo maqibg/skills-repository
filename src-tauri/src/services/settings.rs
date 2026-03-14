@@ -39,6 +39,8 @@ pub fn save_settings(state: &AppState, settings: &AppSettings) -> Result<AppSett
         ));
     }
 
+    crate::http_client::validate_proxy_settings(&settings.proxy)?;
+
     settings_repo::save_settings(&state.paths.db_file, settings)
 }
 

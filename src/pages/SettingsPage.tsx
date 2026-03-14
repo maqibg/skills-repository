@@ -15,6 +15,8 @@ export function SettingsPage() {
   const setLanguage = useSettingsStore((state) => state.setLanguage)
   const setThemeMode = useSettingsStore((state) => state.setThemeMode)
   const setRepositoryStoragePath = useSettingsStore((state) => state.setRepositoryStoragePath)
+  const setProxyEnabled = useSettingsStore((state) => state.setProxyEnabled)
+  const setProxyUrl = useSettingsStore((state) => state.setProxyUrl)
   const saveSettings = useSettingsStore((state) => state.save)
   const repositoryStorage = useAppStore((state) => state.repositoryStorage)
   const setRepositoryStorage = useAppStore((state) => state.setRepositoryStorage)
@@ -253,7 +255,80 @@ export function SettingsPage() {
             </div>
           </section>
 
-          {/* Section 2: Repository Storage */}
+          {/* Section 2: Network Proxy */}
+          <section className="grid gap-6 lg:grid-cols-12 lg:gap-12 pt-8 pb-8">
+            <div className="lg:col-span-4 space-y-4">
+              <div>
+                <h2 className="card-title text-lg font-semibold">{t('settings.proxy.title')}</h2>
+                <p className="mt-1 text-sm text-base-content/60 leading-relaxed">
+                  {t('settings.proxy.description')}
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-8 space-y-5">
+              <div className="rounded-lg border border-[var(--border-subtle)] bg-base-100 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-base-content/80">
+                      {t('settings.proxy.enabledLabel')}
+                    </div>
+                    <div className="mt-1 text-xs text-base-content/60">
+                      {t('settings.proxy.enabledHint')}
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={settings.proxy.enabled}
+                    onChange={(event) => setProxyEnabled(event.target.checked)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label pt-0">
+                  <span className="label-text font-medium text-base-content/80">
+                    {t('settings.proxy.urlLabel')}
+                  </span>
+                </label>
+                <input
+                  className="input input-bordered w-full bg-base-100 font-mono text-sm focus:outline-none"
+                  value={settings.proxy.url}
+                  onChange={(event) => setProxyUrl(event.target.value)}
+                  disabled={saving}
+                  placeholder={t('settings.proxy.urlPlaceholder')}
+                />
+                <div className="mt-2 text-xs text-base-content/50">
+                  {t('settings.proxy.urlHint')}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="btn btn-primary sm:min-w-[140px]"
+                  onClick={() => void persistPreferences()}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs"></span>
+                      {t('settings.saving') || 'Saving...'}
+                    </>
+                  ) : (
+                    <>
+                      <i className="hn hn-save"></i>
+                      {t('settings.proxy.saveAction')}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Repository Storage */}
           <section className="grid gap-6 lg:grid-cols-12 lg:gap-12 pt-8">
             <div className="lg:col-span-4 space-y-4">
               <div>
