@@ -134,7 +134,10 @@ pub(crate) fn path_suffix_matches(candidate: &str, expected: &str) -> bool {
     candidate == expected || candidate.ends_with(&format!("/{}", expected))
 }
 
-fn resolve_requested_skill_root(root: &Path, request: &InstallSkillRequest) -> Result<PathBuf> {
+pub(crate) fn resolve_requested_skill_root(
+    root: &Path,
+    request: &InstallSkillRequest,
+) -> Result<PathBuf> {
     let roots = collect_skill_roots(root)?;
     if roots.is_empty() {
         return Err(anyhow!("no SKILL.md found in downloaded source"));

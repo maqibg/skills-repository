@@ -85,8 +85,10 @@
     "source": "ソース",
     "installedAt": "インストール日時",
     "actions": "操作",
+    "searchPlaceholder": "リポジトリ内の skills を検索",
     "loading": "リポジトリ内の skills を読み込み中...",
     "empty": "リポジトリにはまだ skill がありません。",
+    "emptySearch": "現在の検索条件に一致する skill はありません。",
     "view": "表示",
     "uninstall": "アンインストール",
     "uninstalling": "アンインストール中...",
@@ -96,6 +98,30 @@
     "sourceGithub": "GitHub 導入",
     "sourceMarket": "{{market}}",
     "sourceUnknown": "不明なソース",
+    "update": {
+      "open": "GitHub Skills を更新",
+      "single": "更新",
+      "running": "更新中...",
+      "githubCount": "GitHub ソース {{count}} 件",
+      "resultTitle": "更新結果",
+      "resultCount": "今回の処理件数: {{count}}",
+      "updatedCount": "更新済み {{count}}",
+      "skippedCount": "スキップ {{count}}",
+      "failedCount": "失敗 {{count}}",
+      "versionUnknown": "不明なバージョン",
+      "copyDistributionCount": "copy 分配先 {{count}} 件あり",
+      "statuses": {
+        "updated": "更新済み",
+        "skipped": "スキップ",
+        "failed": "失敗"
+      },
+      "messages": {
+        "updated": "バージョン {{from}} -> {{to}}",
+        "skipped": "すでに最新です（{{version}}）",
+        "blocked": "対象バージョン {{version}} はセキュリティスキャンで阻止されました",
+        "failed": "更新に失敗しました。上部のエラー詳細を確認してください。"
+      }
+    },
     "import": {
       "open": "Skill を導入",
       "title": "Skill を導入",

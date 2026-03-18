@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rusqlite::params;
+use rusqlite::{params, Transaction};
 use std::path::Path;
 
 use crate::domain::types::{SecurityIssue, SecurityRecommendation, SecurityReport};
@@ -10,7 +10,12 @@ use super::db::open_connection;
 pub fn save_security_report(path: &Path, report: &SecurityReport) -> Result<()> {
     let mut conn = open_connection(path)?;
     let tx = conn.transaction()?;
+    save_security_report_in_tx(&tx, report)?;
+    tx.commit()?;
+    Ok(())
+}
 
+pub fn save_security_report_in_tx(tx: &Transaction<'_>, report: &SecurityReport) -> Result<()> {
     if let Some(skill_id) = report.skill_id.as_deref() {
         tx.execute(
             "DELETE FROM security_reports WHERE skill_id = ?1",
@@ -49,8 +54,6 @@ pub fn save_security_report(path: &Path, report: &SecurityReport) -> Result<()> 
             report.scanned_at,
         ],
     )?;
-
-    tx.commit()?;
     Ok(())
 }
 

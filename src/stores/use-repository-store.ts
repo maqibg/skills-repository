@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import {
+  updateGithubRepositorySkills as updateGithubRepositorySkillsCommand,
+  updateRepositorySkill as updateRepositorySkillCommand,
   batchDistributeRepositorySkills as batchDistributeRepositorySkillsCommand,
   getRepositorySkillDeletionPreview as getRepositorySkillDeletionPreviewCommand,
   getRepositorySkillDetail as getRepositorySkillDetailCommand,
@@ -9,6 +11,7 @@ import {
   uninstallRepositorySkill as uninstallRepositorySkillCommand,
 } from '../lib/tauri-client'
 import type {
+  BatchRepositorySkillUpdateResult,
   BatchDistributeRepositorySkillsRequest,
   BatchDistributeResult,
   InstallSkillResult,
@@ -16,10 +19,23 @@ import type {
   RepositorySkillDetail,
   RepositorySkillDeletionPreview,
   RepositorySkillSummary,
+  RepositorySkillUpdateItemResult,
   ResolveRepositoryImportRequest,
   ResolveRepositoryImportResult,
   SecurityReport,
 } from '../types/app'
+
+const toBatchUpdateResult = (
+  result: RepositorySkillUpdateItemResult,
+): BatchRepositorySkillUpdateResult => {
+  if (result.status === 'updated') {
+    return { updated: [result], skipped: [], failed: [] }
+  }
+  if (result.status === 'skipped') {
+    return { updated: [], skipped: [result], failed: [] }
+  }
+  return { updated: [], skipped: [], failed: [result] }
+}
 
 interface RepositoryStoreState {
   items: RepositorySkillSummary[]
@@ -37,6 +53,10 @@ interface RepositoryStoreState {
   distributing: boolean
   distributionError: string | null
   lastDistributionResult: BatchDistributeResult | null
+  updatingSkillIds: string[]
+  bulkUpdating: boolean
+  updateError: string | null
+  lastUpdateResult: BatchRepositorySkillUpdateResult | null
   resolvingImport: boolean
   importing: boolean
   importError: string | null
@@ -51,6 +71,9 @@ interface RepositoryStoreState {
   openDistribution: () => void
   closeDistribution: () => void
   batchDistributeSkills: (request: BatchDistributeRepositorySkillsRequest) => Promise<BatchDistributeResult>
+  updateSkill: (skillId: string) => Promise<RepositorySkillUpdateItemResult>
+  updateGithubSkills: () => Promise<BatchRepositorySkillUpdateResult>
+  clearUpdateState: () => void
   resolveImport: (request: ResolveRepositoryImportRequest) => Promise<ResolveRepositoryImportResult>
   importSkill: (request: ImportRepositorySkillRequest) => Promise<InstallSkillResult>
   resetImportState: () => void
@@ -73,6 +96,10 @@ export const useRepositoryStore = create<RepositoryStoreState>((set, get) => ({
   distributing: false,
   distributionError: null,
   lastDistributionResult: null,
+  updatingSkillIds: [],
+  bulkUpdating: false,
+  updateError: null,
+  lastUpdateResult: null,
   resolvingImport: false,
   importing: false,
   importError: null,
@@ -167,6 +194,76 @@ export const useRepositoryStore = create<RepositoryStoreState>((set, get) => ({
       throw error
     }
   },
+  updateSkill: async (skillId) => {
+    set((state) => ({
+      updatingSkillIds: state.updatingSkillIds.includes(skillId)
+        ? state.updatingSkillIds
+        : [...state.updatingSkillIds, skillId],
+      updateError: null,
+      lastUpdateResult: null,
+    }))
+
+    try {
+      const result = await updateRepositorySkillCommand(skillId)
+      set({
+        updatingSkillIds: get().updatingSkillIds.filter((item) => item !== skillId),
+        updateError: null,
+        lastUpdateResult: toBatchUpdateResult(result),
+      })
+      if (result.status === 'updated') {
+        try {
+          const items = await listRepositorySkillsCommand()
+          set({ items })
+        } catch (error) {
+          set({
+            updateError: error instanceof Error ? error.message : String(error),
+          })
+        }
+      }
+      return result
+    } catch (error) {
+      set((state) => ({
+        updatingSkillIds: state.updatingSkillIds.filter((item) => item !== skillId),
+        updateError: error instanceof Error ? error.message : String(error),
+      }))
+      throw error
+    }
+  },
+  updateGithubSkills: async () => {
+    set({ bulkUpdating: true, updateError: null, lastUpdateResult: null })
+    try {
+      const result = await updateGithubRepositorySkillsCommand()
+      set({
+        bulkUpdating: false,
+        updateError: null,
+        lastUpdateResult: result,
+      })
+      if (result.updated.length > 0) {
+        try {
+          const items = await listRepositorySkillsCommand()
+          set({ items })
+        } catch (error) {
+          set({
+            updateError: error instanceof Error ? error.message : String(error),
+          })
+        }
+      }
+      return result
+    } catch (error) {
+      set({
+        bulkUpdating: false,
+        updateError: error instanceof Error ? error.message : String(error),
+      })
+      throw error
+    }
+  },
+  clearUpdateState: () =>
+    set({
+      updatingSkillIds: [],
+      bulkUpdating: false,
+      updateError: null,
+      lastUpdateResult: null,
+    }),
   resolveImport: async (request) => {
     set({ resolvingImport: true, importError: null, importBlockedReport: null, resolvedImport: null })
     try {

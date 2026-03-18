@@ -85,8 +85,10 @@
     "source": "来源",
     "installedAt": "安装时间",
     "actions": "操作",
+    "searchPlaceholder": "搜索仓库中的 skills",
     "loading": "正在读取 Skills 仓库...",
     "empty": "仓库中还没有任何 skill。",
+    "emptySearch": "没有匹配当前搜索条件的 skill。",
     "view": "查看",
     "uninstall": "卸载",
     "uninstalling": "卸载中...",
@@ -96,6 +98,30 @@
     "sourceGithub": "GitHub 导入",
     "sourceMarket": "{{market}}",
     "sourceUnknown": "未知来源",
+    "update": {
+      "open": "更新 GitHub Skills",
+      "single": "更新",
+      "running": "更新中...",
+      "githubCount": "GitHub 来源 {{count}} 项",
+      "resultTitle": "更新结果",
+      "resultCount": "本轮共处理 {{count}} 项",
+      "updatedCount": "已更新 {{count}}",
+      "skippedCount": "已跳过 {{count}}",
+      "failedCount": "失败 {{count}}",
+      "versionUnknown": "未知版本",
+      "copyDistributionCount": "存在 {{count}} 个 copy 分发目标",
+      "statuses": {
+        "updated": "已更新",
+        "skipped": "已跳过",
+        "failed": "失败"
+      },
+      "messages": {
+        "updated": "版本 {{from}} -> {{to}}",
+        "skipped": "当前已是最新版本（{{version}}）",
+        "blocked": "目标版本 {{version}} 被安全扫描阻断",
+        "failed": "更新失败，请查看上方错误详情。"
+      }
+    },
     "import": {
       "open": "导入 Skill",
       "title": "导入 Skill",

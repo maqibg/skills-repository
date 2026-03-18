@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RepositoryDistributeModal } from '../components/RepositoryDistributeModal'
 import { RepositoryImportModal } from '../components/RepositoryImportModal'
@@ -9,8 +9,10 @@ import { useAppStore } from '../stores/use-app-store'
 import { useRepositoryStore } from '../stores/use-repository-store'
 import { useSettingsStore } from '../stores/use-settings-store'
 import type {
+  BatchRepositorySkillUpdateResult,
   BatchDistributeRepositorySkillsRequest,
   ImportRepositorySkillRequest,
+  RepositorySkillUpdateItemResult,
   RepositoryImportSourceKind,
 } from '../types/app'
 
@@ -60,9 +62,56 @@ const logSourceOpenFailure = (error: unknown) => {
   console.error('Failed to open source reference:', error)
 }
 
+const formatUpdateVersion = (
+  value: string | null | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) => (value?.trim() ? value : t('repository.update.versionUnknown'))
+
+const resolveUpdateTone = (status: string) => {
+  if (status === 'updated') return 'border-success/30 bg-success/5 text-success'
+  if (status === 'skipped') return 'border-info/30 bg-info/5 text-info'
+  return 'border-error/30 bg-error/5 text-error'
+}
+
+const extractUpdateError = (result: RepositorySkillUpdateItemResult) => {
+  if (!result.details || typeof result.details !== 'object') return null
+  const message = result.details.error
+  return typeof message === 'string' && message.trim() ? message : null
+}
+
+const resolveUpdateMessage = (
+  result: RepositorySkillUpdateItemResult,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) => {
+  if (result.status === 'updated') {
+    return t('repository.update.messages.updated', {
+      from: formatUpdateVersion(result.previousVersion, t),
+      to: formatUpdateVersion(result.currentVersion, t),
+    })
+  }
+
+  if (result.status === 'skipped') {
+    return t('repository.update.messages.skipped', {
+      version: formatUpdateVersion(result.currentVersion ?? result.previousVersion, t),
+    })
+  }
+
+  if (result.reasonCode === 'blocked_by_security_scan') {
+    return t('repository.update.messages.blocked', {
+      version: formatUpdateVersion(result.currentVersion, t),
+    })
+  }
+
+  return extractUpdateError(result) ?? t('repository.update.messages.failed')
+}
+
+const flattenUpdateResults = (result: BatchRepositorySkillUpdateResult | null) =>
+  result ? [...result.updated, ...result.skipped, ...result.failed] : []
+
 export function RepositoryPage() {
   const { t, i18n } = useTranslation()
   const [importOpen, setImportOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const settings = useSettingsStore((state) => state.settings)
   const builtinSkillsTargets = useAppStore((state) => state.builtinSkillsTargets)
   const items = useRepositoryStore((state) => state.items)
@@ -80,6 +129,10 @@ export function RepositoryPage() {
   const distributing = useRepositoryStore((state) => state.distributing)
   const distributionError = useRepositoryStore((state) => state.distributionError)
   const lastDistributionResult = useRepositoryStore((state) => state.lastDistributionResult)
+  const updatingSkillIds = useRepositoryStore((state) => state.updatingSkillIds)
+  const bulkUpdating = useRepositoryStore((state) => state.bulkUpdating)
+  const updateError = useRepositoryStore((state) => state.updateError)
+  const lastUpdateResult = useRepositoryStore((state) => state.lastUpdateResult)
   const resolvingImport = useRepositoryStore((state) => state.resolvingImport)
   const importing = useRepositoryStore((state) => state.importing)
   const importError = useRepositoryStore((state) => state.importError)
@@ -95,6 +148,9 @@ export function RepositoryPage() {
   const closeDistribution = useRepositoryStore((state) => state.closeDistribution)
   const batchDistributeSkills = useRepositoryStore((state) => state.batchDistributeSkills)
   const resetDistributionState = useRepositoryStore((state) => state.resetDistributionState)
+  const updateSkill = useRepositoryStore((state) => state.updateSkill)
+  const updateGithubSkills = useRepositoryStore((state) => state.updateGithubSkills)
+  const clearUpdateState = useRepositoryStore((state) => state.clearUpdateState)
   const resolveImport = useRepositoryStore((state) => state.resolveImport)
   const importSkill = useRepositoryStore((state) => state.importSkill)
   const resetImportState = useRepositoryStore((state) => state.resetImportState)
@@ -106,6 +162,21 @@ export function RepositoryPage() {
   const visibleTargets = resolveSkillsTargets(builtinSkillsTargets, settings).filter((target) =>
     settings.visibleSkillsTargetIds.includes(target.id),
   )
+  const githubItems = useMemo(
+    () => items.filter((item) => item.sourceType === 'github'),
+    [items],
+  )
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    if (!normalizedQuery) return items
+
+    return items.filter((item) =>
+      [item.name, item.slug, item.description ?? ''].some((value) =>
+        value.toLowerCase().includes(normalizedQuery),
+      ),
+    )
+  }, [items, query])
+  const updateItems = useMemo(() => flattenUpdateResults(lastUpdateResult), [lastUpdateResult])
 
   const openImportModal = () => {
     resetImportState()
@@ -147,6 +218,14 @@ export function RepositoryPage() {
     await batchDistributeSkills(request)
   }
 
+  const handleUpdateSkill = async (skillId: string) => {
+    await updateSkill(skillId)
+  }
+
+  const handleUpdateGithubSkills = async () => {
+    await updateGithubSkills()
+  }
+
   return (
     <div className="space-y-8 p-8">
       {/* Header Section */}
@@ -160,12 +239,24 @@ export function RepositoryPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button 
-              className="btn btn-primary h-10 w-40 min-h-[2.5rem] border-none bg-primary px-4 text-[var(--text-inverse)] transition-all duration-300 hover:bg-primary hover:shadow-[var(--shadow-neon-primary)]" 
+            <button
+              className="btn btn-primary h-10 w-40 min-h-[2.5rem] border-none bg-primary px-4 text-[var(--text-inverse)] transition-all duration-300 hover:bg-primary hover:shadow-[var(--shadow-neon-primary)]"
               onClick={openImportModal}
             >
               <i className="hn hn-download-alt text-lg"></i>
               {t('repository.import.open')}
+            </button>
+            <button
+              className="btn btn-outline h-10 min-h-[2.5rem] border-[var(--border-subtle)] px-4 text-base-content hover:border-primary hover:bg-primary/10 hover:text-primary"
+              disabled={githubItems.length === 0 || bulkUpdating}
+              onClick={() => void handleUpdateGithubSkills()}
+            >
+              {bulkUpdating ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <i className="hn hn-check text-lg"></i>
+              )}
+              {bulkUpdating ? t('repository.update.running') : t('repository.update.open')}
             </button>
             <button
               className="btn btn-outline h-10 w-40 min-h-[2.5rem] border-[var(--border-subtle)] px-4 text-base-content hover:border-primary hover:bg-primary/10 hover:text-primary"
@@ -181,6 +272,91 @@ export function RepositoryPage() {
 
       {/* Skills List Section */}
       <section className="overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-base-100 shadow-[inset_0_0_20px_rgba(var(--color-primary),0.02)]">
+        <div className="border-b border-[var(--border-subtle)] bg-base-200/30 px-6 py-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-base-content/75">{t('repository.title')}</p>
+              <p className="mt-1 text-xs text-base-content/50">
+                {t('repository.update.githubCount', { count: githubItems.length })}
+              </p>
+            </div>
+            <label className="input input-bordered flex min-w-0 items-center gap-2 border-[var(--border-subtle)] bg-base-100 lg:w-96">
+              <i className="hn hn-search text-base-content/45" aria-hidden />
+              <input
+                type="text"
+                className="grow"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t('repository.searchPlaceholder')}
+                aria-label={t('repository.searchPlaceholder')}
+              />
+            </label>
+          </div>
+
+          {updateError ? (
+            <div className="mt-4 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
+              {updateError}
+            </div>
+          ) : null}
+
+          {lastUpdateResult ? (
+            <div className="mt-4 rounded-lg border border-[var(--border-subtle)] bg-base-100/70 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-base-content">
+                    {t('repository.update.resultTitle')}
+                  </p>
+                  <p className="mt-1 text-xs text-base-content/50">
+                    {t('repository.update.resultCount', { count: updateItems.length })}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="badge border-0 bg-success/10 text-success">
+                    {t('repository.update.updatedCount', { count: lastUpdateResult.updated.length })}
+                  </span>
+                  <span className="badge border-0 bg-info/10 text-info">
+                    {t('repository.update.skippedCount', { count: lastUpdateResult.skipped.length })}
+                  </span>
+                  <span className="badge border-0 bg-error/10 text-error">
+                    {t('repository.update.failedCount', { count: lastUpdateResult.failed.length })}
+                  </span>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={clearUpdateState}
+                    type="button"
+                  >
+                    {t('common.close')}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {updateItems.map((result) => (
+                  <div
+                    key={`${result.skillId}:${result.status}:${result.reasonCode}`}
+                    className={`rounded-lg border px-4 py-3 text-sm ${resolveUpdateTone(result.status)}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-medium">{result.skillName}</p>
+                      <span className="badge badge-outline border-current/20 text-current">
+                        {t(`repository.update.statuses.${result.status}`)}
+                      </span>
+                    </div>
+                    <p className="mt-2 leading-6">{resolveUpdateMessage(result, t)}</p>
+                    {result.copyDistributionCount > 0 ? (
+                      <p className="mt-2 text-xs opacity-80">
+                        {t('repository.update.copyDistributionCount', {
+                          count: result.copyDistributionCount,
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -188,15 +364,24 @@ export function RepositoryPage() {
           </div>
         ) : error ? (
           <div className="flex items-center gap-3 bg-error/10 p-6 text-error">
-             <i className="hn hn-exclaimation text-lg"></i>
-             <span className="text-sm font-medium">{error}</span>
-          </div>
+              <i className="hn hn-exclaimation text-lg"></i>
+              <span className="text-sm font-medium">{error}</span>
+           </div>
         ) : loaded && items.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center">
             <div className="mb-4 rounded-full bg-base-200 p-4 text-base-content/30">
               <i className="hn hn-box-usd text-3xl"></i>
             </div>
             <p className="text-base font-medium text-base-content/60">{t('repository.empty')}</p>
+          </div>
+        ) : loaded && filteredItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-16 text-center">
+            <div className="mb-4 rounded-full bg-base-200 p-4 text-base-content/30">
+              <i className="hn hn-search text-3xl"></i>
+            </div>
+            <p className="text-base font-medium text-base-content/60">
+              {t('repository.emptySearch')}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -207,11 +392,11 @@ export function RepositoryPage() {
                   <th className="w-28 text-center">{t('repository.source')}</th>
                   <th className="w-32 text-center">{t('repository.installedAt')}</th>
                   <th className="w-28 text-center">{t('common.status')}</th>
-                  <th className="w-24 pr-6 text-center">{t('repository.actions')}</th>
+                  <th className="w-48 pr-6 text-center">{t('repository.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
-                {items.map((item) => (
+                {filteredItems.map((item) => (
                   <tr key={item.id} className="group transition-colors hover:bg-base-200/50">
                     <td className="py-4 pl-6 text-left">
                       <div className="flex items-start gap-3">
@@ -262,6 +447,21 @@ export function RepositoryPage() {
                     </td>
                     <td className="pr-6 text-center">
                       <div className="flex justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        {item.sourceType === 'github' ? (
+                          <button
+                            className="btn btn-ghost btn-sm px-3 text-xs text-primary hover:bg-primary/10"
+                            onClick={() => void handleUpdateSkill(item.id)}
+                            disabled={bulkUpdating || updatingSkillIds.includes(item.id)}
+                            title={t('repository.update.single')}
+                          >
+                            {updatingSkillIds.includes(item.id) ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : null}
+                            {updatingSkillIds.includes(item.id)
+                              ? t('repository.update.running')
+                              : t('repository.update.single')}
+                          </button>
+                        ) : null}
                         <button
                           className="btn btn-square btn-ghost btn-sm text-base-content/70 hover:bg-primary/10 hover:text-primary"
                           onClick={() => void loadDetail(item.id)}
@@ -272,7 +472,7 @@ export function RepositoryPage() {
                         <button
                           className="btn btn-square btn-ghost btn-sm text-error/70 hover:bg-error/10 hover:text-error"
                           onClick={() => void handleOpenDeletePreview(item.id)}
-                          disabled={uninstallingSkillId === item.id}
+                          disabled={bulkUpdating || uninstallingSkillId === item.id}
                           title={t('repository.uninstall')}
                         >
                           {uninstallingSkillId === item.id ? (

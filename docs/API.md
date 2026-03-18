@@ -24,6 +24,8 @@
 | `list_repository_skills` | 列出统一仓库中的已安装技能 |
 | `get_repository_skill_detail` | 获取技能详情与 `skillMarkdown` |
 | `get_repository_skill_deletion_preview` | 查看卸载前将删除的目录与分发路径 |
+| `update_repository_skill` | 更新单个 GitHub 来源的仓库 skill |
+| `update_github_repository_skills` | 批量更新所有 GitHub 来源的仓库 skills |
 | `uninstall_repository_skill` | 删除统一仓库 skill 与相关记录 |
 | `scan_agent_global_skills` | 扫描指定 Agent 的全局 skills 目录 |
 | `distribute_skill` | 将单个 skill 分发到目标路径 |

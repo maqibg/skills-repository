@@ -85,8 +85,10 @@
     "source": "Source",
     "installedAt": "Installed at",
     "actions": "Actions",
+    "searchPlaceholder": "Search repository skills",
     "loading": "Loading repository skills...",
     "empty": "The repository does not contain any skills yet.",
+    "emptySearch": "No skills match the current search.",
     "view": "View",
     "uninstall": "Uninstall",
     "uninstalling": "Uninstalling...",
@@ -96,6 +98,30 @@
     "sourceGithub": "GitHub import",
     "sourceMarket": "{{market}}",
     "sourceUnknown": "Unknown source",
+    "update": {
+      "open": "Update GitHub Skills",
+      "single": "Update",
+      "running": "Updating...",
+      "githubCount": "{{count}} GitHub source item(s)",
+      "resultTitle": "Update results",
+      "resultCount": "{{count}} item(s) processed in this run",
+      "updatedCount": "Updated {{count}}",
+      "skippedCount": "Skipped {{count}}",
+      "failedCount": "Failed {{count}}",
+      "versionUnknown": "unknown version",
+      "copyDistributionCount": "{{count}} copy distribution target(s) found",
+      "statuses": {
+        "updated": "Updated",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "messages": {
+        "updated": "Version {{from}} -> {{to}}",
+        "skipped": "Already up to date ({{version}})",
+        "blocked": "Target version {{version}} was blocked by the security scan",
+        "failed": "Update failed. Check the error details above."
+      }
+    },
     "import": {
       "open": "Import Skill",
       "title": "Import Skill",

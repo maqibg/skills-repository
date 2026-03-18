@@ -6,6 +6,10 @@ use serde::{Deserialize, Serialize};
 
 pub(crate) const DEFAULT_PROXY_URL: &str = "127.0.0.1:7890";
 
+pub(crate) fn default_visible_skills_targets_version() -> u32 {
+    super::agent_registry::VISIBLE_SKILLS_TARGETS_VERSION
+}
+
 fn default_proxy_url() -> String {
     DEFAULT_PROXY_URL.to_string()
 }
@@ -33,6 +37,8 @@ pub struct AppSettings {
     pub theme_mode: String,
     #[serde(default = "default_visible_skill_target_ids")]
     pub visible_skills_target_ids: Vec<String>,
+    #[serde(default)]
+    pub visible_skills_targets_version: u32,
     #[serde(default)]
     pub custom_skills_targets: Vec<CustomSkillsTarget>,
     #[serde(default)]
@@ -162,6 +168,8 @@ pub struct RepositorySkillSummary {
     pub blocked: bool,
     #[serde(default)]
     pub risk_override_applied: bool,
+    #[serde(default)]
+    pub can_update: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -180,6 +188,8 @@ pub struct RepositorySkillDetail {
     pub blocked: bool,
     #[serde(default)]
     pub risk_override_applied: bool,
+    #[serde(default)]
+    pub can_update: bool,
     pub skill_markdown: String,
 }
 
@@ -488,4 +498,25 @@ pub struct BatchDistributeResult {
     pub installed: Vec<BatchDistributeItemResult>,
     pub skipped: Vec<BatchDistributeItemResult>,
     pub failed: Vec<BatchDistributeItemResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RepositorySkillUpdateItemResult {
+    pub skill_id: String,
+    pub skill_name: String,
+    pub status: String,
+    pub reason_code: String,
+    pub details: Option<serde_json::Value>,
+    pub previous_version: Option<String>,
+    pub current_version: Option<String>,
+    pub copy_distribution_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchRepositorySkillUpdateResult {
+    pub updated: Vec<RepositorySkillUpdateItemResult>,
+    pub skipped: Vec<RepositorySkillUpdateItemResult>,
+    pub failed: Vec<RepositorySkillUpdateItemResult>,
 }

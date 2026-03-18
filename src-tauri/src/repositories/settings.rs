@@ -5,7 +5,9 @@ use time::OffsetDateTime;
 
 use crate::domain::{
     agent_registry::default_visible_skill_target_ids,
-    types::{AppSettings, ProxySettings, DEFAULT_PROXY_URL},
+    types::{
+        default_visible_skills_targets_version, AppSettings, ProxySettings, DEFAULT_PROXY_URL,
+    },
 };
 
 use super::db::open_connection;
@@ -58,6 +60,7 @@ pub fn default_settings(language: String) -> AppSettings {
         language,
         theme_mode: "system".into(),
         visible_skills_target_ids: default_visible_skill_target_ids(),
+        visible_skills_targets_version: default_visible_skills_targets_version(),
         custom_skills_targets: Vec::new(),
         repository_storage_path: None,
         proxy: ProxySettings {
@@ -83,6 +86,7 @@ mod tests {
             language: "zh-CN".into(),
             theme_mode: "dark".into(),
             visible_skills_target_ids: vec!["universal".into(), "qoder".into()],
+            visible_skills_targets_version: default_visible_skills_targets_version(),
             custom_skills_targets: vec![crate::domain::types::CustomSkillsTarget {
                 id: "custom-demo".into(),
                 label: "Demo IDE".into(),
@@ -101,6 +105,10 @@ mod tests {
         assert_eq!(loaded.language, "zh-CN");
         assert_eq!(loaded.theme_mode, "dark");
         assert_eq!(loaded.visible_skills_target_ids.len(), 2);
+        assert_eq!(
+            loaded.visible_skills_targets_version,
+            default_visible_skills_targets_version()
+        );
         assert_eq!(loaded.custom_skills_targets.len(), 1);
         assert_eq!(
             loaded.repository_storage_path.as_deref(),

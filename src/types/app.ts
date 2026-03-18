@@ -11,6 +11,7 @@ export interface AppSettings {
   language: AppLocale
   themeMode: ThemeMode
   visibleSkillsTargetIds: string[]
+  visibleSkillsTargetsVersion: number
   customSkillsTargets: CustomSkillsTarget[]
   repositoryStoragePath: string | null
   proxy: ProxySettings
@@ -375,5 +376,22 @@ export interface BatchDistributeResult {
   installed: BatchDistributeItemResult[]
   skipped: BatchDistributeItemResult[]
   failed: BatchDistributeItemResult[]
+}
+
+export interface RepositorySkillUpdateItemResult {
+  skillId: string
+  skillName: string
+  status: string
+  reasonCode: string
+  details?: Record<string, unknown> | null
+  previousVersion?: string | null
+  currentVersion?: string | null
+  copyDistributionCount: number
+}
+
+export interface BatchRepositorySkillUpdateResult {
+  updated: RepositorySkillUpdateItemResult[]
+  skipped: RepositorySkillUpdateItemResult[]
+  failed: RepositorySkillUpdateItemResult[]
 }
 
