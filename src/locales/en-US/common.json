@@ -98,6 +98,16 @@
     "sourceGithub": "GitHub import",
     "sourceMarket": "{{market}}",
     "sourceUnknown": "Unknown source",
+    "search": {
+      "activeQuery": "Current search: \"{{query}}\"",
+      "pageSummary": "Showing {{start}}-{{end}} of {{total}} result(s)",
+      "clear": "Clear search",
+      "emptyTitle": "No matching skills found",
+      "emptyDescription": "Try a different keyword for \"{{query}}\", or clear the search to browse all repository skills again.",
+      "currentPage": "Page {{page}} / {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
     "update": {
       "open": "Update GitHub Skills",
       "single": "Update",

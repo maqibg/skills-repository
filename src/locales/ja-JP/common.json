@@ -98,6 +98,16 @@
     "sourceGithub": "GitHub 導入",
     "sourceMarket": "{{market}}",
     "sourceUnknown": "不明なソース",
+    "search": {
+      "activeQuery": "現在の検索: \"{{query}}\"",
+      "pageSummary": "{{total}} 件中 {{start}}-{{end}} 件を表示",
+      "clear": "検索をクリア",
+      "emptyTitle": "一致する skill が見つかりません",
+      "emptyDescription": "「{{query}}」とは別のキーワードを試すか、検索をクリアして全件をもう一度確認してください。",
+      "currentPage": "{{page}} / {{total}} ページ",
+      "previous": "前へ",
+      "next": "次へ"
+    },
     "update": {
       "open": "GitHub Skills を更新",
       "single": "更新",

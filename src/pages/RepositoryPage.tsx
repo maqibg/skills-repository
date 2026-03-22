@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { HighlightedText } from '../components/common/HighlightedText'
 import { useTranslation } from 'react-i18next'
 import { RepositoryDistributeModal } from '../components/RepositoryDistributeModal'
 import { RepositoryImportModal } from '../components/RepositoryImportModal'
 import { normalizeDisplayPath } from '../lib/normalize-display-path'
+import {
+  buildRepositoryPageNumbers,
+  buildRepositorySearchIndex,
+  paginateRepositorySearchResults,
+  searchRepositoryIndex,
+} from '../lib/repository-search'
 import { resolveSkillsTargets } from '../lib/skills-targets'
 import { openSourceReference } from '../lib/tauri-client'
 import { useAppStore } from '../stores/use-app-store'
@@ -12,9 +19,12 @@ import type {
   BatchRepositorySkillUpdateResult,
   BatchDistributeRepositorySkillsRequest,
   ImportRepositorySkillRequest,
+  RepositorySkillSummary,
   RepositorySkillUpdateItemResult,
   RepositoryImportSourceKind,
 } from '../types/app'
+
+const SEARCH_PAGE_SIZE = 10
 
 const formatInstalledAt = (value: number, locale: string) =>
   new Intl.DateTimeFormat(locale, {
@@ -108,10 +118,19 @@ const resolveUpdateMessage = (
 const flattenUpdateResults = (result: BatchRepositorySkillUpdateResult | null) =>
   result ? [...result.updated, ...result.skipped, ...result.failed] : []
 
+interface SearchableRepositorySkill extends RepositorySkillSummary {
+  sourceLabel: string
+  statusKey: string
+  statusLabel: string
+  keywords: string[]
+}
+
 export function RepositoryPage() {
   const { t, i18n } = useTranslation()
   const [importOpen, setImportOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const deferredQuery = useDeferredValue(query)
   const settings = useSettingsStore((state) => state.settings)
   const builtinSkillsTargets = useAppStore((state) => state.builtinSkillsTargets)
   const items = useRepositoryStore((state) => state.items)
@@ -166,17 +185,42 @@ export function RepositoryPage() {
     () => items.filter((item) => item.sourceType === 'github'),
     [items],
   )
-  const filteredItems = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return items
-
-    return items.filter((item) =>
-      [item.name, item.slug, item.description ?? ''].some((value) =>
-        value.toLowerCase().includes(normalizedQuery),
-      ),
-    )
-  }, [items, query])
+  const searchableItems = useMemo<SearchableRepositorySkill[]>(
+    () =>
+      items.map((item) => {
+        const statusKey = resolveStatusKey(item.securityLevel, item.blocked, item.riskOverrideApplied)
+        return {
+          ...item,
+          sourceLabel: resolveSourceLabel(item.sourceType, item.sourceMarket, t),
+          statusKey,
+          statusLabel: t(`repository.statusValues.${statusKey}`),
+          keywords: [item.sourceType, item.sourceMarket ?? '', item.securityLevel].filter(Boolean),
+        }
+      }),
+    [items, t],
+  )
+  const searchIndex = useMemo(
+    () => buildRepositorySearchIndex(searchableItems),
+    [searchableItems],
+  )
+  const searchResults = useMemo(
+    () => searchRepositoryIndex(searchIndex, deferredQuery),
+    [searchIndex, deferredQuery],
+  )
+  const isSearching = deferredQuery.trim().length > 0
+  const paginatedResults = useMemo(
+    () => paginateRepositorySearchResults(searchResults, currentPage, SEARCH_PAGE_SIZE),
+    [currentPage, searchResults],
+  )
+  const visibleResults = isSearching ? paginatedResults.items : searchResults
+  const searchPageNumbers = useMemo(
+    () => buildRepositoryPageNumbers(paginatedResults.page, paginatedResults.pageCount),
+    [paginatedResults.page, paginatedResults.pageCount],
+  )
   const updateItems = useMemo(() => flattenUpdateResults(lastUpdateResult), [lastUpdateResult])
+  const searchQueryDisplay = deferredQuery.trim()
+  const visibleRangeStart = paginatedResults.total === 0 ? 0 : paginatedResults.startIndex + 1
+  const visibleRangeEnd = paginatedResults.endIndex
 
   const openImportModal = () => {
     resetImportState()
@@ -224,6 +268,16 @@ export function RepositoryPage() {
 
   const handleUpdateGithubSkills = async () => {
     await updateGithubSkills()
+  }
+
+  const handleClearSearch = () => {
+    setQuery('')
+    setCurrentPage(1)
+  }
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    setCurrentPage(1)
   }
 
   return (
@@ -276,9 +330,18 @@ export function RepositoryPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-semibold text-base-content/75">{t('repository.title')}</p>
-              <p className="mt-1 text-xs text-base-content/50">
-                {t('repository.update.githubCount', { count: githubItems.length })}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-base-content/50">
+                <span>{t('repository.update.githubCount', { count: githubItems.length })}</span>
+                {isSearching ? (
+                  <span>
+                    {t('repository.search.pageSummary', {
+                      start: visibleRangeStart,
+                      end: visibleRangeEnd,
+                      total: paginatedResults.total,
+                    })}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <label className="input input-bordered flex min-w-0 items-center gap-2 border-[var(--border-subtle)] bg-base-100 lg:w-96">
               <i className="hn hn-search text-base-content/45" aria-hidden />
@@ -286,12 +349,52 @@ export function RepositoryPage() {
                 type="text"
                 className="grow"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => handleQueryChange(event.target.value)}
                 placeholder={t('repository.searchPlaceholder')}
                 aria-label={t('repository.searchPlaceholder')}
               />
+              {query ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs btn-circle"
+                  onClick={handleClearSearch}
+                  aria-label={t('repository.search.clear')}
+                >
+                  <i className="hn hn-times text-xs"></i>
+                </button>
+              ) : null}
             </label>
           </div>
+
+          {isSearching ? (
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-[var(--border-subtle)] bg-base-100/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-base-content">
+                  {t('repository.search.activeQuery', { query: searchQueryDisplay })}
+                </p>
+                <p className="mt-1 text-xs text-base-content/50">
+                  {t('repository.search.pageSummary', {
+                    start: visibleRangeStart,
+                    end: visibleRangeEnd,
+                    total: paginatedResults.total,
+                  })}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {paginatedResults.pageCount > 1 ? (
+                  <span className="badge border-0 bg-base-200/80 px-3 py-3 text-base-content/65">
+                    {t('repository.search.currentPage', {
+                      page: paginatedResults.page,
+                      total: paginatedResults.pageCount,
+                    })}
+                  </span>
+                ) : null}
+                <button className="btn btn-outline btn-sm" onClick={handleClearSearch} type="button">
+                  {t('repository.search.clear')}
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {updateError ? (
             <div className="mt-4 rounded-lg border border-error/30 bg-error/5 px-4 py-3 text-sm text-error">
@@ -374,119 +477,183 @@ export function RepositoryPage() {
             </div>
             <p className="text-base font-medium text-base-content/60">{t('repository.empty')}</p>
           </div>
-        ) : loaded && filteredItems.length === 0 ? (
+        ) : loaded && isSearching && searchResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 text-center">
-            <div className="mb-4 rounded-full bg-base-200 p-4 text-base-content/30">
+            <div className="mb-4 rounded-full bg-primary/10 p-4 text-primary/70">
               <i className="hn hn-search text-3xl"></i>
             </div>
-            <p className="text-base font-medium text-base-content/60">
-              {t('repository.emptySearch')}
+            <h3 className="text-lg font-semibold text-base-content">{t('repository.search.emptyTitle')}</h3>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-base-content/60">
+              {t('repository.search.emptyDescription', { query: searchQueryDisplay })}
             </p>
+            <button type="button" className="btn btn-primary mt-6" onClick={handleClearSearch}>
+              {t('repository.search.clear')}
+            </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table-fixed table w-full">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)] bg-base-200/50 text-xs font-bold uppercase tracking-wider text-base-content/40">
-                  <th className="py-4 pl-6 text-left">{t('common.name')}</th>
-                  <th className="w-28 text-center">{t('repository.source')}</th>
-                  <th className="w-32 text-center">{t('repository.installedAt')}</th>
-                  <th className="w-28 text-center">{t('common.status')}</th>
-                  <th className="w-48 pr-6 text-center">{t('repository.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-subtle)]">
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="group transition-colors hover:bg-base-200/50">
-                    <td className="py-4 pl-6 text-left">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
-                          <i className="hn hn-code-block text-base leading-none"></i>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-base-content/90 transition-colors group-hover:text-primary">
-                            {item.name}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-base-content/50">
-                            {resolveDescription(item.description, t)}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-center text-sm text-base-content/70">
-                      {resolveSourceLabel(item.sourceType, item.sourceMarket, t)}
-                    </td>
-                    <td className="text-center font-mono text-xs text-base-content/50">
-                      {formatInstalledAt(item.installedAt, i18n.language)}
-                    </td>
-                    <td className="text-center">
-                      {(() => {
-                        const statusKey = resolveStatusKey(
-                          item.securityLevel,
-                          item.blocked,
-                          item.riskOverrideApplied,
-                        )
-                        return (
-                          <span className={`inline-flex whitespace-nowrap badge badge-sm gap-1 border-0 font-bold ${
-                            statusKey === 'blocked' ? 'bg-error/20 text-error' :
-                            statusKey === 'overridden' ? 'bg-warning/20 text-warning' :
-                            statusKey === 'safe' ? 'bg-success/20 text-success' :
-                            statusKey === 'low' ? 'bg-success/10 text-success/80' :
-                            'bg-warning/20 text-warning'
-                          }`}>
-                            <i className={`hn ${
-                              statusKey === 'blocked' ? 'hn-lock' :
-                              statusKey === 'overridden' ? 'hn-shield' :
-                              statusKey === 'safe' ? 'hn-check-circle' :
-                              'hn-exclaimation'
-                            } text-xs`}></i>
-                            {t(`repository.statusValues.${statusKey}`)}
-                          </span>
-                        )
-                      })()}
-                    </td>
-                    <td className="pr-6 text-center">
-                      <div className="flex justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                        {item.sourceType === 'github' ? (
-                          <button
-                            className="btn btn-ghost btn-sm px-3 text-xs text-primary hover:bg-primary/10"
-                            onClick={() => void handleUpdateSkill(item.id)}
-                            disabled={bulkUpdating || updatingSkillIds.includes(item.id)}
-                            title={t('repository.update.single')}
-                          >
-                            {updatingSkillIds.includes(item.id) ? (
-                              <span className="loading loading-spinner loading-xs"></span>
-                            ) : null}
-                            {updatingSkillIds.includes(item.id)
-                              ? t('repository.update.running')
-                              : t('repository.update.single')}
-                          </button>
-                        ) : null}
-                        <button
-                          className="btn btn-square btn-ghost btn-sm text-base-content/70 hover:bg-primary/10 hover:text-primary"
-                          onClick={() => void loadDetail(item.id)}
-                          title={t('repository.view')}
-                        >
-                          <i className="hn hn-eye"></i>
-                        </button>
-                        <button
-                          className="btn btn-square btn-ghost btn-sm text-error/70 hover:bg-error/10 hover:text-error"
-                          onClick={() => void handleOpenDeletePreview(item.id)}
-                          disabled={bulkUpdating || uninstallingSkillId === item.id}
-                          title={t('repository.uninstall')}
-                        >
-                          {uninstallingSkillId === item.id ? (
-                            <span className="loading loading-spinner loading-xs"></span>
-                          ) : (
-                            <i className="hn hn-trash"></i>
-                          )}
-                        </button>
-                      </div>
-                    </td>
+          <div>
+            <div className="overflow-x-auto">
+              <table className="table-fixed table w-full">
+                <thead>
+                  <tr className="border-b border-[var(--border-subtle)] bg-base-200/50 text-xs font-bold uppercase tracking-wider text-base-content/40">
+                    <th className="py-4 pl-6 text-left">{t('common.name')}</th>
+                    <th className="w-28 text-center">{t('repository.source')}</th>
+                    <th className="w-32 text-center">{t('repository.installedAt')}</th>
+                    <th className="w-28 text-center">{t('common.status')}</th>
+                    <th className="w-48 pr-6 text-center">{t('repository.actions')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {visibleResults.map(({ item, highlights }) => (
+                    <tr key={item.id} className="group transition-colors hover:bg-base-200/50">
+                      <td className="py-4 pl-6 text-left">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary">
+                            <i className="hn hn-code-block text-base leading-none"></i>
+                          </div>
+                          <div className="min-w-0">
+                            <HighlightedText
+                              text={item.name}
+                              ranges={highlights.name}
+                              className="block font-bold text-base-content/90 transition-colors group-hover:text-primary"
+                            />
+                            <HighlightedText
+                              text={resolveDescription(item.description, t)}
+                              ranges={highlights.description}
+                              className="mt-1 block line-clamp-2 text-sm leading-6 text-base-content/50"
+                              highlightClassName="rounded-sm bg-primary/12 px-0.5 text-base-content"
+                            />
+                            {isSearching ? (
+                              <div className="mt-2 flex flex-wrap gap-2 text-xs text-base-content/40">
+                                <span className="rounded bg-base-200/80 px-2 py-1 font-mono">
+                                  <HighlightedText
+                                    text={item.slug}
+                                    ranges={highlights.slug}
+                                    className="font-mono"
+                                    highlightClassName="rounded-sm bg-primary/12 px-0.5 text-primary"
+                                  />
+                                </span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-center text-sm text-base-content/70">
+                        <HighlightedText
+                          text={item.sourceLabel}
+                          ranges={highlights.source}
+                          className="text-sm text-base-content/70"
+                        />
+                      </td>
+                      <td className="text-center font-mono text-xs text-base-content/50">
+                        {formatInstalledAt(item.installedAt, i18n.language)}
+                      </td>
+                      <td className="text-center">
+                        <span className={`inline-flex whitespace-nowrap badge badge-sm gap-1 border-0 font-bold ${
+                          item.statusKey === 'blocked' ? 'bg-error/20 text-error' :
+                          item.statusKey === 'overridden' ? 'bg-warning/20 text-warning' :
+                          item.statusKey === 'safe' ? 'bg-success/20 text-success' :
+                          item.statusKey === 'low' ? 'bg-success/10 text-success/80' :
+                          'bg-warning/20 text-warning'
+                        }`}>
+                          <i className={`hn ${
+                            item.statusKey === 'blocked' ? 'hn-lock' :
+                            item.statusKey === 'overridden' ? 'hn-shield' :
+                            item.statusKey === 'safe' ? 'hn-check-circle' :
+                            'hn-exclaimation'
+                          } text-xs`}></i>
+                          {t(`repository.statusValues.${item.statusKey}`)}
+                        </span>
+                      </td>
+                      <td className="pr-6 text-center">
+                        <div className="flex justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                          {item.sourceType === 'github' ? (
+                            <button
+                              className="btn btn-ghost btn-sm px-3 text-xs text-primary hover:bg-primary/10"
+                              onClick={() => void handleUpdateSkill(item.id)}
+                              disabled={bulkUpdating || updatingSkillIds.includes(item.id)}
+                              title={t('repository.update.single')}
+                            >
+                              {updatingSkillIds.includes(item.id) ? (
+                                <span className="loading loading-spinner loading-xs"></span>
+                              ) : null}
+                              {updatingSkillIds.includes(item.id)
+                                ? t('repository.update.running')
+                                : t('repository.update.single')}
+                            </button>
+                          ) : null}
+                          <button
+                            className="btn btn-square btn-ghost btn-sm text-base-content/70 hover:bg-primary/10 hover:text-primary"
+                            onClick={() => void loadDetail(item.id)}
+                            title={t('repository.view')}
+                          >
+                            <i className="hn hn-eye"></i>
+                          </button>
+                          <button
+                            className="btn btn-square btn-ghost btn-sm text-error/70 hover:bg-error/10 hover:text-error"
+                            onClick={() => void handleOpenDeletePreview(item.id)}
+                            disabled={bulkUpdating || uninstallingSkillId === item.id}
+                            title={t('repository.uninstall')}
+                          >
+                            {uninstallingSkillId === item.id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <i className="hn hn-trash"></i>
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {isSearching && paginatedResults.pageCount > 1 ? (
+              <div className="flex flex-col gap-4 border-t border-[var(--border-subtle)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-base-content/60">
+                  {t('repository.search.pageSummary', {
+                    start: visibleRangeStart,
+                    end: visibleRangeEnd,
+                    total: paginatedResults.total,
+                  })}
+                </p>
+                <div className="join self-start sm:self-auto">
+                  <button
+                    type="button"
+                    className="btn btn-sm join-item border-[var(--border-subtle)] bg-base-100"
+                    onClick={() => setCurrentPage(Math.max(1, paginatedResults.page - 1))}
+                    disabled={paginatedResults.page <= 1}
+                  >
+                    {t('repository.search.previous')}
+                  </button>
+                  {searchPageNumbers.map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      className={`btn btn-sm join-item border-[var(--border-subtle)] ${
+                        pageNumber === paginatedResults.page
+                          ? 'btn-primary'
+                          : 'bg-base-100 text-base-content/70'
+                      }`}
+                      onClick={() => setCurrentPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-sm join-item border-[var(--border-subtle)] bg-base-100"
+                    onClick={() =>
+                      setCurrentPage(Math.min(paginatedResults.pageCount, paginatedResults.page + 1))
+                    }
+                    disabled={paginatedResults.page >= paginatedResults.pageCount}
+                  >
+                    {t('repository.search.next')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </section>

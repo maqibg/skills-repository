@@ -160,9 +160,20 @@ cargo test --manifest-path src-tauri/Cargo.toml
 - 安全相关流程强调**显式失败**，避免静默 fallback 或伪成功路径。
 - 数据契约集中在 `src/types/app.ts`，是前后端协作的首要入口。
 
+## 上游已处理标记规范
+
+当当前 fork 评审或吸收 `linbei0/skills-repository` 的上游提交时，统一使用以下标记：
+
+- `Upstream-cherry-picked-from: <sha>`：表示该上游提交已原样吸收，优先用于 `git cherry-pick -x` 或几乎不改语义的同步。
+- `Upstream-ported-from: <sha>`：表示该上游提交的功能已手工移植，但实现为了适配本地约束做了调整，不能等同于原样吸收。
+- `Upstream-reviewed-not-ported: <sha>`：表示该上游提交已评审，但明确决定不吸收，例如纯重构、过时版本 bump、重复 merge commit，或与当前 fork 方向不一致。
+
+处理记录统一写入 [`docs/upstream-sync.md`](./docs/upstream-sync.md)。后续新增上游评审时，应优先更新该台账，再在提交说明或发布说明中补充必要背景。
+
 ## 参考文档
 
 - 参考项目：<https://github.com/buzhangsan/skills-manager-client>
 - API 速查：`docs/API.md`
+- 上游处理台账：`docs/upstream-sync.md`
 - Tauri 官方文档：<https://v2.tauri.app/>
 - React 官方文档：<https://react.dev/>
